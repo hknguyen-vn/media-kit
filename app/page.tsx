@@ -346,9 +346,10 @@ function MediaKitContent() {
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 {[
                                   { id: "c:project", label: "Dự án", icon: Zap, color: "text-blue-500" },
-                                  { id: "c:machine", label: "Máy móc", icon: Zap, color: "text-amber-500" },
-                                  { id: "c:factory", label: "Nhà máy", icon: Zap, color: "text-emerald-500" },
-                                  { id: "c:profile", label: "Hồ sơ", icon: Zap, color: "text-purple-500" },
+                                  { id: "c:machine", label: "MMTB-Công nghệ", icon: Zap, color: "text-amber-500" },
+                                  { id: "c:factory", label: "Nhà máy HGPT", icon: Zap, color: "text-emerald-500" },
+                                  { id: "c:process", label: "Quy trình", icon: Zap, color: "text-cyan-500" },
+                                  { id: "c:profile", label: "Hồ sơ năng lực", icon: Zap, color: "text-purple-500" },
                                 ].map((cat) => (
                                   <button
                                     key={cat.id}
@@ -551,26 +552,26 @@ function MediaKitContent() {
                 alt="Preview"
                 className="max-w-full max-h-full object-contain shadow-2xl rounded-lg"
               />
-              
+
               {/* Info Overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent text-white rounded-b-lg">
                 <div className="flex items-center justify-between">
-                   <div>
-                     <p className="text-sm font-medium text-white/70 mb-2">Ảnh {previewIndex + 1} / {filteredAssets.length}</p>
-                     <div className="flex flex-wrap gap-2">
-                       {filteredAssets[previewIndex].tags?.split(",").map((t: string, i: number) => (
-                         <span key={i} className="text-[10px] px-2 py-0.5 bg-white/10 rounded-full border border-white/10">
-                           {t.trim()}
-                         </span>
-                       ))}
-                     </div>
-                   </div>
-                   <button 
-                     onClick={() => window.open(filteredAssets[previewIndex].fileUrl, "_blank")}
-                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold transition-all"
-                   >
-                     <Expand size={14} /> Xem Full Size
-                   </button>
+                  <div>
+                    <p className="text-sm font-medium text-white/70 mb-2">Ảnh {previewIndex + 1} / {filteredAssets.length}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {filteredAssets[previewIndex].tags?.split(",").map((t: string, i: number) => (
+                        <span key={i} className="text-[10px] px-2 py-0.5 bg-white/10 rounded-full border border-white/10">
+                          {t.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => window.open(filteredAssets[previewIndex].fileUrl, "_blank")}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold transition-all"
+                  >
+                    <Expand size={14} /> Xem Full Size
+                  </button>
                 </div>
               </div>
             </motion.div>

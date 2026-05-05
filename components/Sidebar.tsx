@@ -15,7 +15,8 @@ import {
   FileText,
   PlayCircle,
   Share2,
-  Globe
+  Globe,
+  LayoutList
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn, copyToClipboard } from "@/lib/utils";
@@ -29,8 +30,9 @@ interface SidebarProps {
 const CATEGORIES = [
   { id: "all", label: "Tất cả Media", icon: LayoutGrid },
   { id: "c:project", label: "Năng lực Dự án", icon: Briefcase },
-  { id: "c:factory", label: "Nhà máy", icon: Factory },
-  { id: "c:machine", label: "Máy móc thiết bị", icon: Cpu },
+  { id: "c:factory", label: "Nhà máy HGPT", icon: Factory },
+  { id: "c:process", label: "Quy trình", icon: LayoutList },
+  { id: "c:machine", label: "MMTB - Công nghệ", icon: Cpu },
   { id: "c:profile", label: "Hồ sơ năng lực", icon: FileText },
 ];
 
@@ -195,7 +197,7 @@ export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps)
       {popularTags.length > 0 && (
         <section className="space-y-3">
           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-4 sticky top-0 bg-[#fafafa] dark:bg-[#050505] z-10 pb-2 flex items-center justify-between pr-4">
-            Từ khóa phổ biến
+            Top từ khóa
             <span className="normal-case tracking-normal opacity-50">{totalHashtags}</span>
           </h3>
           <div className="flex flex-wrap gap-1.5 px-4 max-h-[25vh] overflow-y-auto custom-scrollbar pb-2">

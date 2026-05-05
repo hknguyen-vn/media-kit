@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, X, Hash, Image as ImageIcon, Loader2, Briefcase, Factory, Cpu, Plus, FileText } from "lucide-react";
+import { Upload, X, Hash, Image as ImageIcon, Loader2, Briefcase, Factory, Cpu, Plus, FileText, LayoutList } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -14,8 +14,9 @@ interface UploadZoneProps {
 
 const CATEGORIES = [
   { id: "project", label: "Dự án", icon: Briefcase },
-  { id: "factory", label: "Nhà máy", icon: Factory },
-  { id: "machine", label: "Máy móc", icon: Cpu },
+  { id: "factory", label: "Nhà máy HGPT", icon: Factory },
+  { id: "machine", label: "MMTB - Công nghệ", icon: Cpu },
+  { id: "process", label: "Quy trình", icon: LayoutList },
   { id: "profile", label: "Hồ sơ năng lực", icon: FileText },
   { id: "other", label: "Khác", icon: ImageIcon },
 ];
@@ -27,7 +28,7 @@ export function UploadZone({ onUpload, loading, existingProjects }: UploadZonePr
   const [projectName, setProjectName] = useState("");
   const [tags, setTags] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  
+
   // Toggle for expanded view
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -46,7 +47,7 @@ export function UploadZone({ onUpload, loading, existingProjects }: UploadZonePr
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const files = Array.from(e.dataTransfer.files);
       if (files.length > 0) {
@@ -84,7 +85,7 @@ export function UploadZone({ onUpload, loading, existingProjects }: UploadZonePr
     ].filter(Boolean).join(", ");
 
     await onUpload(selectedFiles, finalTags);
-    
+
     // Reset after success
     setSelectedFiles([]);
     setProjectName("");
@@ -98,7 +99,7 @@ export function UploadZone({ onUpload, loading, existingProjects }: UploadZonePr
       !isExpanded ? "w-fit ml-auto" : "w-full shadow-2xl"
     )}>
       {/* Compact Header Bar */}
-      <div 
+      <div
         className={cn(
           "flex items-center gap-3 cursor-pointer transition-colors px-4 py-2.5",
           !isExpanded ? "hover:bg-blue-50 dark:hover:bg-blue-900/20" : "bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-100 dark:border-zinc-800"
@@ -111,7 +112,7 @@ export function UploadZone({ onUpload, loading, existingProjects }: UploadZonePr
         )}>
           <Upload size={16} />
         </div>
-        
+
         {isExpanded ? (
           <div className="flex-1 min-w-[200px]">
             <h3 className="font-black text-xs uppercase tracking-tight">Upload Media</h3>
@@ -149,7 +150,7 @@ export function UploadZone({ onUpload, loading, existingProjects }: UploadZonePr
                 )}
               >
                 <input ref={inputRef} type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple onChange={handleChange} className="hidden" />
-                
+
                 {selectedFiles.length === 0 ? (
                   <div className="py-6 text-center cursor-pointer" onClick={() => inputRef.current?.click()}>
                     <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Click hoặc kéo thả nhiều ảnh/tài liệu vào đây</p>
