@@ -12,9 +12,10 @@ interface AssetCardProps {
   onTagClick: (tag: string) => void;
   onUpdate: (id: number, title: string, tags: string) => Promise<void>;
   onPreview: (assetId: number) => void;
+  onDrillDown?: () => void;
 }
 
-export function AssetCard({ assets, onDelete, onTagClick, onUpdate, onPreview }: AssetCardProps) {
+export function AssetCard({ assets, onDelete, onTagClick, onUpdate, onPreview, onDrillDown }: AssetCardProps) {
   const asset = assets[0]; // Main asset
   const isGroup = assets.length > 1;
   const [isHovered, setIsHovered] = useState(false);
@@ -87,11 +88,16 @@ export function AssetCard({ assets, onDelete, onTagClick, onUpdate, onPreview }:
             <span className="text-xs font-bold text-zinc-500 uppercase">{asset.title?.split('.').pop()}</span>
           </div>
         )}
-        
+
         {isGroup && (
-          <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-md px-2 py-1 rounded-md z-10 shadow-lg border border-white/10">
-            <span className="text-[10px] font-bold text-white tracking-wide">{assets.length} images</span>
-          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDrillDown?.(); }}
+            className="absolute top-3 right-3 bg-gray/40 hover:bg-blue-600 backdrop-blur-md px-2.5 py-1.5 rounded-md z-10 shadow-lg border border-white/10 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
+            title="Xem tất cả hình ảnh"
+          >
+            <span className="text-[10px] font-bold text-white tracking-wide">{assets.length} pics</span>
+            <span className="text-[10px] font-bold text-blue-200 ml-1">➔</span>
+          </button>
         )}
 
         {/* Overlay Controls */}
@@ -144,19 +150,19 @@ export function AssetCard({ assets, onDelete, onTagClick, onUpdate, onPreview }:
         <div className={cn(
           "grid gap-[2px] mt-[2px]",
           assets.length === 2 ? "grid-cols-1" :
-          assets.length === 3 ? "grid-cols-2" :
-          "grid-cols-3"
+            assets.length === 3 ? "grid-cols-2" :
+              "grid-cols-3"
         )}>
           {assets.slice(1, 4).map((subAsset, idx) => (
-            <div 
-              key={idx} 
-              className="relative aspect-[4/3] bg-zinc-100 dark:bg-zinc-800 overflow-hidden cursor-zoom-in" 
+            <div
+              key={idx}
+              className="relative aspect-[4/3] bg-zinc-100 dark:bg-zinc-800 overflow-hidden cursor-zoom-in"
               onClick={(e) => { e.stopPropagation(); onPreview(subAsset.id); }}
             >
               {subAsset.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) ? (
                 <img src={getThumb(subAsset.fileUrl)} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-zinc-200 dark:bg-zinc-800"><FileText size={20} className="text-zinc-400"/></div>
+                <div className="w-full h-full flex items-center justify-center bg-zinc-200 dark:bg-zinc-800"><FileText size={20} className="text-zinc-400" /></div>
               )}
             </div>
           ))}

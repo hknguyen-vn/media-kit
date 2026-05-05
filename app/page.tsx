@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database, ChevronLeft, ChevronRight, Expand } from "lucide-react";
+import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database, ChevronLeft, ChevronRight, Expand, Copy, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { uploadToCloudinary } from "@/lib/cloudinary";
@@ -85,14 +85,42 @@ function MediaKitContent() {
   // Client-side filtering and grouping
   const { filteredAssets, displayGroups } = useMemo(() => {
     let filtered = assets;
-    if (activeFilters.length > 0) {
-      filtered = assets.filter((a) => {
+
+    // Apply normal filters first
+    const normalFilters = activeFilters.filter(f => !f.startsWith('cluster:'));
+    if (normalFilters.length > 0) {
+      filtered = filtered.filter((a) => {
         const tags = (a.tags?.toLowerCase() || "").split(",").map((t: string) => t.trim());
-        return activeFilters.every(f => tags.some((tag: string) => tag.includes(f.toLowerCase())));
+        return normalFilters.every(f => tags.some((tag: string) => tag.includes(f.toLowerCase())));
       });
     }
 
-    const hasProjectFilter = activeFilters.some(f => f.startsWith('p:'));
+    // Check if we are in drill-down mode for a specific cluster
+    const drillDownFilter = activeFilters.find(f => f.startsWith('cluster:'));
+    if (drillDownFilter) {
+      const matchKey = drillDownFilter.replace('cluster:', '');
+      
+      filtered = assets.filter(a => {
+        const tags = a.tags?.split(',').map((t: string) => t.trim()).filter(Boolean) || [];
+        const cTag = tags.find((t: string) => t.startsWith('c:')) || 'c:none';
+        const pTag = tags.find((t: string) => t.startsWith('p:')) || 'p:none';
+        const otherTags = tags.filter((t: string) => !t.startsWith('c:') && !t.startsWith('p:'));
+        
+        let assetKey = '';
+        if (pTag !== 'p:none') {
+          assetKey = `${cTag}:::${pTag}`;
+        } else if (otherTags.length > 0) {
+          assetKey = `${cTag}:::tags:${otherTags.sort().join('|')}`;
+        } else {
+          assetKey = `single_${a.id}`;
+        }
+        
+        return assetKey === matchKey;
+      });
+      return { filteredAssets: filtered, displayGroups: filtered.map(a => [a]) }; // Ungrouped!
+    }
+
+    const hasProjectFilter = normalFilters.some(f => f.startsWith('p:'));
     const isSearching = search.length > 0;
 
     // If searching or filtering by a specific project, don't group (show individuals)
@@ -100,15 +128,27 @@ function MediaKitContent() {
       return { filteredAssets: filtered, displayGroups: filtered.map(a => [a]) };
     }
 
-    // Group by combination of Category and Project
+    // Group by combination of Category, Project, or Hashtags
     const groups = new Map<string, any[]>();
 
     filtered.forEach(asset => {
-      const tagsArray = asset.tags?.split(',').map((t: string) => t.trim()) || [];
+      const tagsArray = asset.tags?.split(',').map((t: string) => t.trim()).filter(Boolean) || [];
       const cTag = tagsArray.find((t: string) => t.startsWith('c:')) || 'c:none';
       const pTag = tagsArray.find((t: string) => t.startsWith('p:')) || 'p:none';
+      const otherTags = tagsArray.filter((t: string) => !t.startsWith('c:') && !t.startsWith('p:'));
       
-      const groupKey = `${cTag}_${pTag}`;
+      let groupKey = '';
+      
+      if (pTag !== 'p:none') {
+        // Mode 1: Group by Project
+        groupKey = `${cTag}:::${pTag}`;
+      } else if (otherTags.length > 0) {
+        // Mode 2: Group by Category + Hashtags (when no project)
+        groupKey = `${cTag}:::tags:${otherTags.sort().join('|')}`;
+      } else {
+        // Mode 3: Individual Asset
+        groupKey = `single_${asset.id}`;
+      }
 
       if (!groups.has(groupKey)) {
         groups.set(groupKey, []);
@@ -118,10 +158,10 @@ function MediaKitContent() {
 
     const result: any[][] = [];
     groups.forEach(groupAssets => result.push(groupAssets));
-    
-    return { 
-      filteredAssets: filtered, 
-      displayGroups: result 
+
+    return {
+      filteredAssets: filtered,
+      displayGroups: result
     };
   }, [assets, activeFilters, search]);
 
@@ -462,7 +502,7 @@ function MediaKitContent() {
                       className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-[10px] font-bold text-blue-600 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all group"
                     >
                       <Filter size={10} className="text-zinc-400 group-hover:text-blue-500" />
-                      {f.replace("c:", "").replace("p:", "").toUpperCase()}
+                      {f.replace("c:", "").replace("p:", "").replace("tags:", "").toUpperCase()}
                       <X size={10} className="text-zinc-400 group-hover:text-red-500" />
                     </button>
                   ))}
@@ -490,8 +530,6 @@ function MediaKitContent() {
                   className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
                 >
                   {displayGroups.slice(0, visibleCount).map((group, index) => {
-                    // Find actual index of the first asset in the filteredAssets array for the Lightbox
-                    const actualIndex = filteredAssets.findIndex(a => a.id === group[0].id);
                     return (
                       <motion.div
                         key={group[0].id}
@@ -509,6 +547,30 @@ function MediaKitContent() {
                           onPreview={(assetId: number) => {
                             const idx = filteredAssets.findIndex(a => a.id === assetId);
                             openPreview(idx !== -1 ? idx : 0);
+                          }}
+                          onDrillDown={() => {
+                            const tagsArray = group[0].tags?.split(',').map((t: string) => t.trim()).filter(Boolean) || [];
+                            const cTag = tagsArray.find((t: string) => t.startsWith('c:')) || 'c:none';
+                            const pTag = tagsArray.find((t: string) => t.startsWith('p:')) || 'p:none';
+                            const otherTags = tagsArray.filter((t: string) => !t.startsWith('c:') && !t.startsWith('p:'));
+                            
+                            let groupKey = '';
+                            if (pTag !== 'p:none') {
+                              groupKey = `${cTag}:::${pTag}`;
+                            } else if (otherTags.length > 0) {
+                              groupKey = `${cTag}:::tags:${otherTags.sort().join('|')}`;
+                            } else {
+                              groupKey = `single_${group[0].id}`;
+                            }
+                            
+                            setActiveFilters(prev => {
+                              const withoutCluster = prev.filter(f => !f.startsWith('cluster:'));
+                              return [...withoutCluster, `cluster:${groupKey}`];
+                            });
+                            // Reset visible count when drilling down
+                            setVisibleCount(24);
+                            // Scroll to top smoothly
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
                         />
                       </motion.div>
@@ -607,12 +669,40 @@ function MediaKitContent() {
                       ))}
                     </div>
                   </div>
-                  <button
-                    onClick={() => window.open(filteredAssets[previewIndex].fileUrl, "_blank")}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold transition-all"
-                  >
-                    <Expand size={14} /> Xem Full Size
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(filteredAssets[previewIndex].fileUrl);
+                        toast.success("Đã sao chép liên kết!");
+                      }}
+                      className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
+                      title="Copy Link"
+                    >
+                      <Copy size={18} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const link = document.createElement("a");
+                        link.href = filteredAssets[previewIndex].fileUrl;
+                        link.download = filteredAssets[previewIndex].title;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
+                      title="Download"
+                    >
+                      <Download size={18} />
+                    </button>
+                    <button
+                      onClick={() => window.open(filteredAssets[previewIndex].fileUrl, "_blank")}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold transition-all shadow-lg"
+                    >
+                      <Expand size={14} /> Xem Full Size
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
