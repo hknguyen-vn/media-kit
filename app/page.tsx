@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database } from "lucide-react";
+import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database, ChevronLeft, ChevronRight, Expand } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { uploadToCloudinary } from "@/lib/cloudinary";
@@ -25,6 +25,7 @@ function MediaKitContent() {
   const [fetching, setFetching] = useState(true);
   const [visibleCount, setVisibleCount] = useState(12);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   // Sync state with URL
   useEffect(() => {
@@ -110,6 +111,37 @@ function MediaKitContent() {
       prev.includes(f) ? prev.filter(item => item !== f) : [...prev, f]
     );
   };
+
+  const openPreview = (index: number) => {
+    setPreviewIndex(index);
+    document.body.style.overflow = "hidden";
+  };
+
+  const closePreview = () => {
+    setPreviewIndex(null);
+    document.body.style.overflow = "auto";
+  };
+
+  const navigatePreview = (direction: 'next' | 'prev') => {
+    if (previewIndex === null) return;
+    if (direction === 'next') {
+      setPreviewIndex((previewIndex + 1) % filteredAssets.length);
+    } else {
+      setPreviewIndex((previewIndex - 1 + filteredAssets.length) % filteredAssets.length);
+    }
+  };
+
+  // Keyboard navigation for preview
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (previewIndex === null) return;
+      if (e.key === "Escape") closePreview();
+      if (e.key === "ArrowRight") navigatePreview('next');
+      if (e.key === "ArrowLeft") navigatePreview('prev');
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [previewIndex, filteredAssets.length]);
 
   const handleUpload = async (files: File[], tagsString: string) => {
     setLoading(true);
@@ -216,8 +248,8 @@ function MediaKitContent() {
           </motion.div>
         </div>
 
-        {/* System Health Status (Top Left) */}
-        <div className="absolute top-10 left-6 z-30 flex flex-col gap-2">
+        {/* System Health Status (Top Left) - Hidden on Mobile */}
+        <div className="hidden md:flex absolute top-10 left-6 z-30 flex-col gap-2">
           <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm border border-zinc-100 dark:border-zinc-800/50 group">
             <div className="relative">
               <Database size={13} className="text-zinc-400 group-hover:text-blue-500 transition-colors" />
@@ -244,7 +276,7 @@ function MediaKitContent() {
         </div>
 
         {/* Floating/Corner Upload Zone */}
-        <div className="absolute top-10 right-6 z-30 w-full max-w-xs md:max-w-md pointer-events-none">
+        <div className="hidden md:block absolute top-10 right-6 z-30 w-full max-w-xs md:max-w-md pointer-events-none">
           <div className="pointer-events-auto">
             <UploadZone onUpload={handleUpload} loading={loading} existingProjects={projectsList} />
           </div>
@@ -422,7 +454,7 @@ function MediaKitContent() {
                   layout
                   className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
                 >
-                  {filteredAssets.slice(0, visibleCount).map((asset) => (
+                  {filteredAssets.slice(0, visibleCount).map((asset, index) => (
                     <motion.div
                       key={asset.id}
                       layout
@@ -436,6 +468,7 @@ function MediaKitContent() {
                         onDelete={handleDelete}
                         onTagClick={(tag) => toggleFilter(tag, 'multi')}
                         onUpdate={handleUpdate}
+                        onPreview={() => openPreview(index)}
                       />
                     </motion.div>
                   ))}
@@ -473,6 +506,78 @@ function MediaKitContent() {
           </div>
         </div>
       </div>
+      {/* Image Preview Lightbox */}
+      <AnimatePresence>
+        {previewIndex !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-10"
+            onClick={closePreview}
+          >
+            <button
+              onClick={closePreview}
+              className="absolute top-6 right-6 p-3 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all z-[110]"
+            >
+              <X size={24} />
+            </button>
+
+            {/* Navigation Buttons */}
+            <button
+              onClick={(e) => { e.stopPropagation(); navigatePreview('prev'); }}
+              className="absolute left-4 md:left-10 p-4 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all z-[110]"
+            >
+              <ChevronLeft size={32} />
+            </button>
+
+            <button
+              onClick={(e) => { e.stopPropagation(); navigatePreview('next'); }}
+              className="absolute right-4 md:right-10 p-4 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all z-[110]"
+            >
+              <ChevronRight size={32} />
+            </button>
+
+            <motion.div
+              key={previewIndex}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-5xl w-full h-full flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={filteredAssets[previewIndex].fileUrl}
+                alt="Preview"
+                className="max-w-full max-h-full object-contain shadow-2xl rounded-lg"
+              />
+              
+              {/* Info Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent text-white rounded-b-lg">
+                <div className="flex items-center justify-between">
+                   <div>
+                     <p className="text-sm font-medium text-white/70 mb-2">Ảnh {previewIndex + 1} / {filteredAssets.length}</p>
+                     <div className="flex flex-wrap gap-2">
+                       {filteredAssets[previewIndex].tags?.split(",").map((t: string, i: number) => (
+                         <span key={i} className="text-[10px] px-2 py-0.5 bg-white/10 rounded-full border border-white/10">
+                           {t.trim()}
+                         </span>
+                       ))}
+                     </div>
+                   </div>
+                   <button 
+                     onClick={() => window.open(filteredAssets[previewIndex].fileUrl, "_blank")}
+                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold transition-all"
+                   >
+                     <Expand size={14} /> Xem Full Size
+                   </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <SocialSidebar />
     </div>
   );

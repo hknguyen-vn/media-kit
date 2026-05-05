@@ -14,7 +14,7 @@ const iconMap: Record<string, any> = {
 
 export function SocialSidebar() {
   return (
-    <div className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2 p-3 pr-0 group">
+    <div className="hidden lg:flex fixed left-0 top-1/2 -translate-y-1/2 z-50 flex-col gap-2 p-3 pr-0 group">
       {SOCIAL_LINKS.map((link, index) => {
         const Icon = iconMap[link.icon] || Globe;
         return (

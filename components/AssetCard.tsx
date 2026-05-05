@@ -13,15 +13,16 @@ interface AssetCardProps {
     fileUrl: string;
     tags: string;
   };
-  onDelete: (id: number) => void;
+  onDelete: (id: number) => Promise<void>;
   onTagClick: (tag: string) => void;
   onUpdate: (id: number, title: string, tags: string) => Promise<void>;
+  onPreview: () => void;
 }
 
-export function AssetCard({ asset, onDelete, onTagClick, onUpdate }: AssetCardProps) {
+export function AssetCard({ asset, onDelete, onTagClick, onUpdate, onPreview }: AssetCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [copied, setCopied] = useState(false);
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(asset.title);
   const [editTags, setEditTags] = useState(asset.tags || "");
@@ -73,7 +74,10 @@ export function AssetCard({ asset, onDelete, onTagClick, onUpdate }: AssetCardPr
       className="group relative bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all duration-500"
     >
       {/* Image Container */}
-      <div className="relative aspect-[3/2] overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+      <div
+        onClick={onPreview}
+        className="relative aspect-[3/2] overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center cursor-zoom-in"
+      >
         {isImage ? (
           <img
             src={getThumb(asset.fileUrl)}
@@ -86,7 +90,7 @@ export function AssetCard({ asset, onDelete, onTagClick, onUpdate }: AssetCardPr
             <span className="text-xs font-bold text-zinc-500 uppercase">{asset.title.split('.').pop()}</span>
           </div>
         )}
-        
+
         {/* Overlay Controls */}
         <AnimatePresence>
           {isHovered && (
@@ -103,7 +107,7 @@ export function AssetCard({ asset, onDelete, onTagClick, onUpdate }: AssetCardPr
               >
                 {copied ? <Check size={18} className="text-green-600" /> : <Copy size={18} />}
               </button>
-              
+
               <button
                 onClick={handleDownload}
                 className="p-3 bg-white/90 hover:bg-white text-zinc-900 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95"
@@ -133,35 +137,35 @@ export function AssetCard({ asset, onDelete, onTagClick, onUpdate }: AssetCardPr
       </div>
 
       {/* Info Section */}
-      <div className="p-4 space-y-3">
+      <div className="p-3 space-y-2">
         {isEditing ? (
           <div className="space-y-2">
-            <input 
+            <input
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 outline-none focus:ring-2 focus:ring-blue-500/30"
               placeholder="Tên tài liệu..."
             />
-            <textarea 
+            <textarea
               value={editTags}
               onChange={(e) => setEditTags(e.target.value)}
               className="w-full px-2 py-1.5 text-xs border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 outline-none focus:ring-2 focus:ring-blue-500/30 min-h-[60px]"
               placeholder="Nhập hashtag, phân cách bằng dấu phẩy..."
             />
             <div className="flex gap-2">
-              <button 
-                onClick={handleSave} 
+              <button
+                onClick={handleSave}
                 disabled={isSaving}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1.5 rounded-lg transition-colors"
               >
                 {isSaving ? "Đang lưu..." : "Lưu"}
               </button>
-              <button 
+              <button
                 onClick={() => {
                   setIsEditing(false);
                   setEditTitle(asset.title);
                   setEditTags(asset.tags || "");
-                }} 
+                }}
                 className="flex-1 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 text-xs font-bold py-1.5 rounded-lg transition-colors"
               >
                 Hủy
@@ -169,33 +173,28 @@ export function AssetCard({ asset, onDelete, onTagClick, onUpdate }: AssetCardPr
             </div>
           </div>
         ) : (
-          <>
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold text-zinc-800 dark:text-zinc-100 truncate text-sm flex-1">
-                {asset.title}
-              </h3>
-              <button 
-                onClick={() => setIsEditing(true)}
-                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md transition-colors whitespace-nowrap"
-              >
-                Sửa
-              </button>
-            </div>
-
+          <div className="flex items-center justify-between gap-4">
             {/* Tags */}
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1 flex-1">
               {asset.tags?.split(",").filter(Boolean).map((tag: string, i: number) => (
                 <button
                   key={i}
                   onClick={() => onTagClick(tag.trim())}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[10px] font-medium text-zinc-600 dark:text-zinc-400 hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-50 dark:bg-zinc-800/50 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors border border-zinc-100 dark:border-zinc-800"
                 >
-                  {tag.trim().startsWith("#") ? <Hash size={10} /> : null}
+                  {tag.trim().startsWith("#") ? <Hash size={9} /> : null}
                   {tag.trim().replace("#", "")}
                 </button>
               ))}
             </div>
-          </>
+
+            <button
+              onClick={() => setIsEditing(true)}
+              className="text-[9px] font-black text-blue-600/70 hover:text-blue-600 dark:text-blue-400/70 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-2 py-1 rounded-lg transition-all whitespace-nowrap uppercase tracking-wider"
+            >
+              Sửa
+            </button>
+          </div>
         )}
       </div>
     </motion.div>
