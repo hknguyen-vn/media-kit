@@ -93,24 +93,39 @@ export function UploadZone({ onUpload, loading, existingProjects }: UploadZonePr
   };
 
   return (
-    <div className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm transition-all overflow-hidden">
+    <div className={cn(
+      "w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl transition-all overflow-hidden",
+      !isExpanded ? "w-fit ml-auto" : "w-full shadow-2xl"
+    )}>
       {/* Compact Header Bar */}
       <div 
-        className="p-4 flex items-center justify-between cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+        className={cn(
+          "flex items-center gap-3 cursor-pointer transition-colors px-4 py-2.5",
+          !isExpanded ? "hover:bg-blue-50 dark:hover:bg-blue-900/20" : "bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-100 dark:border-zinc-800"
+        )}
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
-            <Upload size={18} />
-          </div>
-          <div>
-            <h3 className="font-semibold text-sm">Upload Media</h3>
-            <p className="text-xs text-zinc-500">Kéo thả nhiều ảnh hoặc click để chọn ({selectedFiles.length} file đã chọn)</p>
-          </div>
+        <div className={cn(
+          "p-2 rounded-xl transition-colors",
+          !isExpanded ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30" : "bg-blue-50 dark:bg-blue-900/20 text-blue-600"
+        )}>
+          <Upload size={16} />
         </div>
-        <button className="px-4 py-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs font-bold rounded-lg hover:bg-zinc-200">
-          {isExpanded ? "Thu gọn" : "Mở rộng"}
-        </button>
+        
+        {isExpanded ? (
+          <div className="flex-1 min-w-[200px]">
+            <h3 className="font-black text-xs uppercase tracking-tight">Upload Media</h3>
+            <p className="text-[10px] text-zinc-500">{selectedFiles.length} file đã chọn</p>
+          </div>
+        ) : (
+          <span className="text-xs font-black text-blue-600 pr-2">Tải ảnh lên</span>
+        )}
+
+        {isExpanded && (
+          <button className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors">
+            <X size={14} className="text-zinc-400" />
+          </button>
+        )}
       </div>
 
       <AnimatePresence>

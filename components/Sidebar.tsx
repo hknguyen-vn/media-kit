@@ -14,7 +14,8 @@ import {
   Box,
   FileText,
   PlayCircle,
-  Share2
+  Share2,
+  Globe
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn, copyToClipboard } from "@/lib/utils";
@@ -100,7 +101,7 @@ export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps)
     e.stopPropagation();
     const baseUrl = window.location.origin + window.location.pathname;
     const url = `${baseUrl}?f=${encodeURIComponent(filterValue)}`;
-    
+
     const success = await copyToClipboard(url);
     if (success) {
       toast.success(`Đã sao chép liên kết cho "${filterValue.replace("p:", "").replace("c:", "")}"`);
@@ -177,7 +178,7 @@ export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps)
                     {projectCounts[proj.id]}
                   </span>
                 </button>
-                <button 
+                <button
                   onClick={(e) => handleShare(e, proj.id)}
                   className="p-1.5 opacity-0 group-hover/item:opacity-100 text-zinc-400 hover:text-blue-600 transition-all"
                   title="Chia sẻ dự án này"
@@ -213,7 +214,7 @@ export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps)
                   {tag.replace("#", "")}
                   <span className="ml-1 opacity-50 font-medium">{hashtagCounts[tag]}</span>
                 </button>
-                <button 
+                <button
                   onClick={(e) => handleShare(e, tag)}
                   className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover/tag:opacity-100 text-zinc-400 hover:text-blue-600 transition-all p-0.5"
                   title="Chia sẻ hashtag"
@@ -226,27 +227,6 @@ export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps)
         </section>
       )}
 
-      {/* Stats Widget */}
-      <div className="p-5 rounded-3xl bg-gradient-to-br from-zinc-900 to-black dark:from-zinc-800 dark:to-zinc-900 text-white space-y-4 shadow-2xl">
-        <div className="flex items-center gap-2 text-blue-400">
-          <Box size={16} />
-          <span className="text-[10px] font-black uppercase tracking-widest">Hệ thống</span>
-        </div>
-        <div>
-          <p className="text-2xl font-black">{assets.length}</p>
-          <p className="text-[10px] text-zinc-400 font-medium">Tài liệu đã số hóa</p>
-        </div>
-        <div className="pt-2 border-t border-zinc-700/50">
-          <a
-            href="https://www.youtube.com/"
-            target="_blank"
-            rel="noreferrer"
-            className="text-[10px] font-bold text-red-400 hover:text-red-300 transition-colors flex items-center gap-1.5 py-1"
-          >
-            <PlayCircle size={14} /> Kênh YouTube
-          </a>
-        </div>
-      </div>
     </div>
   );
 }

@@ -2,19 +2,20 @@
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash } from "lucide-react";
+import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { AssetCard } from "@/components/AssetCard";
 import { UploadZone } from "@/components/UploadZone";
 import { Sidebar } from "@/components/Sidebar";
-import { copyToClipboard } from "@/lib/utils";
+import { SocialSidebar } from "@/components/SocialSidebar";
+import { copyToClipboard, cn } from "@/lib/utils";
 
 function MediaKitContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [assets, setAssets] = useState<any[]>([]);
   const [search, setSearch] = useState(searchParams.get("s") || "");
   const [activeFilters, setActiveFilters] = useState<string[]>(
@@ -23,17 +24,18 @@ function MediaKitContent() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [visibleCount, setVisibleCount] = useState(12);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Sync state with URL
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set("s", search);
     if (activeFilters.length > 0) params.set("f", activeFilters.join(","));
-    
+
     const query = params.toString();
     const url = query ? `?${query}` : "/";
     window.history.replaceState(null, "", url);
-    
+
     // Reset visible count on filter/search change
     setVisibleCount(12);
   }, [search, activeFilters]);
@@ -42,7 +44,7 @@ function MediaKitContent() {
   const { projectsList, hashtagsList } = useMemo(() => {
     const pSet = new Set<string>();
     const hSet = new Set<string>();
-    
+
     assets.forEach(a => {
       const tags = a.tags?.split(",") || [];
       tags.forEach((t: string) => {
@@ -88,12 +90,23 @@ function MediaKitContent() {
     });
   }, [assets, activeFilters]);
 
-  const toggleFilter = (f: string) => {
+  const toggleFilter = (f: string, mode: 'single' | 'multi' = 'multi') => {
     if (!f) {
       setActiveFilters([]);
       return;
     }
-    setActiveFilters(prev => 
+
+    if (mode === 'single') {
+      // If clicking the same filter that is already the ONLY one, clear it
+      if (activeFilters.length === 1 && activeFilters[0] === f) {
+        setActiveFilters([]);
+      } else {
+        setActiveFilters([f]);
+      }
+      return;
+    }
+
+    setActiveFilters(prev =>
       prev.includes(f) ? prev.filter(item => item !== f) : [...prev, f]
     );
   };
@@ -129,13 +142,13 @@ function MediaKitContent() {
     }
 
     setLoading(false);
-    
+
     if (failCount === 0) {
       toast.success(`Tải lên thành công ${successCount} ảnh`, { id: toastId });
     } else {
       toast.warning(`Tải lên ${successCount} thành công, ${failCount} thất bại`, { id: toastId });
     }
-    
+
     loadAssets();
   };
 
@@ -145,7 +158,7 @@ function MediaKitContent() {
     try {
       const res = await fetch(`/api/assets?id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
-      
+
       setAssets((prev) => prev.filter((a) => a.id !== id));
       toast.success("Đã xóa file");
     } catch (err) {
@@ -161,7 +174,7 @@ function MediaKitContent() {
         body: JSON.stringify({ id, title, tags }),
       });
       if (!res.ok) throw new Error("Update failed");
-      
+
       const updatedAsset = await res.json();
       setAssets((prev) => prev.map((a) => a.id === id ? updatedAsset : a));
       toast.success("Cập nhật thành công");
@@ -187,93 +200,196 @@ function MediaKitContent() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[10px] font-black tracking-widest uppercase border border-blue-100 dark:border-blue-800"
+            className="flex flex-col items-center gap-4 mb-2"
           >
-            <Sparkles size={12} />
-            Hệ thống Quản lý Năng lực Media
+            <div className="relative w-32 h-12 md:w-40 md:h-16">
+              <img
+                src="/logo-hgpt.png"
+                alt="HGPT Logo"
+                className="w-full h-full object-contain dark:brightness-110"
+              />
+            </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[10px] font-black tracking-widest uppercase border border-blue-100 dark:border-blue-800">
+              <Sparkles size={12} />
+              Media Kit System
+            </div>
           </motion.div>
-          <motion.h1 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-3xl md:text-4xl font-black tracking-tight"
-          >
-            Visual <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Assets</span>
-          </motion.h1>
+        </div>
+
+        {/* System Health Status (Top Left) */}
+        <div className="absolute top-10 left-6 z-30 flex flex-col gap-2">
+          <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm border border-zinc-100 dark:border-zinc-800/50 group">
+            <div className="relative">
+              <Database size={13} className="text-zinc-400 group-hover:text-blue-500 transition-colors" />
+              <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            </div>
+            <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-tighter">DB Online</span>
+          </div>
+
+          <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm border border-zinc-100 dark:border-zinc-800/50 group">
+            <div className="relative">
+              <Cloud size={13} className="text-zinc-400 group-hover:text-sky-500 transition-colors" />
+              <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            </div>
+            <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-tighter">Cloudinary Ready</span>
+          </div>
+
+          <div className="flex items-center gap-2 px-2 py-1 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
+            <div className="relative flex items-center justify-center">
+              <CheckCircle2 size={13} className="text-emerald-500" />
+              <div className="absolute inset-0 bg-emerald-400 rounded-full animate-ping opacity-20" />
+            </div>
+            <span className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Healthy 100%</span>
+          </div>
+        </div>
+
+        {/* Floating/Corner Upload Zone */}
+        <div className="absolute top-10 right-6 z-30 w-full max-w-xs md:max-w-md pointer-events-none">
+          <div className="pointer-events-auto">
+            <UploadZone onUpload={handleUpload} loading={loading} existingProjects={projectsList} />
+          </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex gap-12">
           {/* Sidebar */}
-          <Sidebar 
-            assets={assets} 
-            activeFilters={activeFilters} 
-            onFilterChange={toggleFilter} 
+          <Sidebar
+            assets={assets}
+            activeFilters={activeFilters}
+            onFilterChange={(f) => toggleFilter(f, 'single')}
           />
 
           {/* Main Content */}
           <div className="flex-1 space-y-8">
-            {/* Upload Area */}
-            <section>
-              <UploadZone onUpload={handleUpload} loading={loading} existingProjects={projectsList} />
-            </section>
+            {/* Space reserved for search and gallery */}
 
             {/* Toolbar */}
             <div className="space-y-3 sticky top-6 z-20">
-              <div className="flex items-center gap-4 p-2 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                  <input
-                    type="text"
-                    placeholder="Tìm kiếm dự án, máy móc, vật liệu hoặc #hashtag..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-transparent border-none focus:ring-0 text-sm placeholder:text-zinc-400 outline-none"
-                  />
-                  
-                  {/* Hashtag Suggestions */}
-                  {search.length >= 1 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-200">
-                      <div className="text-[10px] font-black text-zinc-400 px-1 pb-3 uppercase tracking-[0.2em]">Hashtags liên quan</div>
-                      <div className="flex flex-wrap gap-2">
-                        {hashtagsList
-                          .filter(h => h.toLowerCase().includes(search.toLowerCase().replace('#', '')))
-                          .map(h => (
-                            <button
-                              key={h}
-                              onClick={() => {
-                                toggleFilter(h);
-                                setSearch(""); // Clear search after picking a tag
-                              }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-zinc-600 dark:text-zinc-400 hover:text-blue-600 rounded-xl text-xs font-bold transition-all border border-transparent hover:border-blue-100 dark:hover:border-blue-800"
-                            >
-                              <Hash size={12} className="opacity-50" />
-                              {h.replace('#', '')}
-                            </button>
-                          ))}
-                        {hashtagsList.filter(h => h.toLowerCase().includes(search.toLowerCase().replace('#', ''))).length === 0 && (
-                          <div className="text-xs text-zinc-400 py-2 px-1">Không tìm thấy hashtag nào...</div>
+              <div className={cn(
+                "bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-sm transition-all duration-300",
+                isSearchFocused ? "shadow-2xl ring-1 ring-blue-500/20" : ""
+              )}>
+                <div className="flex items-center gap-4 p-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                    <input
+                      type="text"
+                      placeholder="Tìm kiếm tên dự án hoặc từ khóa / hashtag..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                      className="w-full pl-12 pr-4 py-3 bg-transparent border-none focus:ring-0 text-sm placeholder:text-zinc-400 outline-none"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleShareCollection}
+                    className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20 whitespace-nowrap"
+                  >
+                    <Share2 size={14} />
+                    Chia sẻ
+                  </button>
+                </div>
+
+                {/* Unfolding Suggestions (Pushes content down) */}
+                <AnimatePresence>
+                  {isSearchFocused && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden border-t border-zinc-100 dark:border-zinc-800/50"
+                    >
+                      <div className="p-5 max-h-[400px] overflow-y-auto custom-scrollbar">
+                        {search.length === 0 ? (
+                          <div className="space-y-6">
+                            {/* Categories Shortcuts */}
+                            <div>
+                              <div className="flex items-center gap-2 mb-4">
+                                <LayoutGrid size={14} className="text-blue-500" />
+                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Chuyên mục nổi bật</span>
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {[
+                                  { id: "c:project", label: "Dự án", icon: Zap, color: "text-blue-500" },
+                                  { id: "c:machine", label: "Máy móc", icon: Zap, color: "text-amber-500" },
+                                  { id: "c:factory", label: "Nhà máy", icon: Zap, color: "text-emerald-500" },
+                                  { id: "c:profile", label: "Hồ sơ", icon: Zap, color: "text-purple-500" },
+                                ].map((cat) => (
+                                  <button
+                                    key={cat.id}
+                                    onClick={() => toggleFilter(cat.id, 'multi')}
+                                    className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/30 hover:bg-white dark:hover:bg-zinc-800 rounded-2xl text-left transition-all border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 group shadow-sm hover:shadow-md"
+                                  >
+                                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                      <cat.icon size={16} className={cat.color} />
+                                    </div>
+                                    <span className="text-xs font-black text-zinc-700 dark:text-zinc-200">{cat.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Popular Hashtags */}
+                            <div>
+                              <div className="flex items-center gap-2 mb-4">
+                                <TrendingUp size={14} className="text-purple-500" />
+                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Hashtag phổ biến</span>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {hashtagsList.slice(0, 15).map((h) => (
+                                  <button
+                                    key={h}
+                                    onClick={() => toggleFilter(h, 'multi')}
+                                    className="px-3 py-2 bg-white dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-xs font-bold transition-all border border-zinc-100 dark:border-zinc-800 shadow-sm"
+                                  >
+                                    {h}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Search size={14} className="text-blue-500" />
+                              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Kết quả tìm kiếm hashtags</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {hashtagsList
+                                .filter(h => h.toLowerCase().includes(search.toLowerCase().replace('#', '')))
+                                .map(h => (
+                                  <button
+                                    key={h}
+                                    onClick={() => {
+                                      toggleFilter(h, 'multi');
+                                      setSearch("");
+                                    }}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50/50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-xl text-xs font-black transition-all border border-blue-100/50 dark:border-blue-900/50"
+                                  >
+                                    <Hash size={14} className="opacity-50" />
+                                    {h.replace('#', '')}
+                                  </button>
+                                ))}
+                              {hashtagsList.filter(h => h.toLowerCase().includes(search.toLowerCase().replace('#', ''))).length === 0 && (
+                                <div className="text-sm text-zinc-400 py-8 text-center italic">Không tìm thấy hashtag nào phù hợp...</div>
+                              )}
+                            </div>
+                          </div>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   )}
-                </div>
-                
-                <button 
-                  onClick={handleShareCollection}
-                  className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20 whitespace-nowrap"
-                >
-                  <Share2 size={14} />
-                  Chia sẻ
-                </button>
+                </AnimatePresence>
               </div>
 
               {/* Active Filters Tokens */}
               {activeFilters.length > 0 && (
                 <div className="flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
                   {activeFilters.map(f => (
-                    <button 
+                    <button
                       key={f}
                       onClick={() => toggleFilter(f)}
                       className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-[10px] font-bold text-blue-600 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all group"
@@ -283,7 +399,7 @@ function MediaKitContent() {
                       <X size={10} className="text-zinc-400 group-hover:text-red-500" />
                     </button>
                   ))}
-                  <button 
+                  <button
                     onClick={() => toggleFilter("")}
                     className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-all"
                   >
@@ -307,13 +423,21 @@ function MediaKitContent() {
                   className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
                 >
                   {filteredAssets.slice(0, visibleCount).map((asset) => (
-                    <AssetCard
+                    <motion.div
                       key={asset.id}
-                      asset={asset}
-                      onDelete={handleDelete}
-                      onTagClick={(tag) => toggleFilter(tag)}
-                      onUpdate={handleUpdate}
-                    />
+                      layout
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <AssetCard
+                        asset={asset}
+                        onDelete={handleDelete}
+                        onTagClick={(tag) => toggleFilter(tag, 'multi')}
+                        onUpdate={handleUpdate}
+                      />
+                    </motion.div>
                   ))}
                 </motion.div>
               ) : (
@@ -349,6 +473,7 @@ function MediaKitContent() {
           </div>
         </div>
       </div>
+      <SocialSidebar />
     </div>
   );
 }
