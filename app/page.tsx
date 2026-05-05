@@ -82,14 +82,48 @@ function MediaKitContent() {
     return () => clearTimeout(timeout);
   }, [search]);
 
-  // Client-side filtering for Sidebar and Multi-select
-  const filteredAssets = useMemo(() => {
-    if (activeFilters.length === 0) return assets;
-    return assets.filter((a) => {
-      const tags = (a.tags?.toLowerCase() || "").split(",").map((t: string) => t.trim());
-      return activeFilters.every(f => tags.some((tag: string) => tag.includes(f.toLowerCase())));
+  // Client-side filtering and grouping
+  const { filteredAssets, displayGroups } = useMemo(() => {
+    let filtered = assets;
+    if (activeFilters.length > 0) {
+      filtered = assets.filter((a) => {
+        const tags = (a.tags?.toLowerCase() || "").split(",").map((t: string) => t.trim());
+        return activeFilters.every(f => tags.some((tag: string) => tag.includes(f.toLowerCase())));
+      });
+    }
+
+    const hasProjectFilter = activeFilters.some(f => f.startsWith('p:'));
+    const isSearching = search.length > 0;
+
+    // If searching or filtering by a specific project, don't group (show individuals)
+    if (hasProjectFilter || isSearching) {
+      return { filteredAssets: filtered, displayGroups: filtered.map(a => [a]) };
+    }
+
+    // Group by combination of Category and Project
+    const groups = new Map<string, any[]>();
+
+    filtered.forEach(asset => {
+      const tagsArray = asset.tags?.split(',').map((t: string) => t.trim()) || [];
+      const cTag = tagsArray.find((t: string) => t.startsWith('c:')) || 'c:none';
+      const pTag = tagsArray.find((t: string) => t.startsWith('p:')) || 'p:none';
+      
+      const groupKey = `${cTag}_${pTag}`;
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, []);
+      }
+      groups.get(groupKey)!.push(asset);
     });
-  }, [assets, activeFilters]);
+
+    const result: any[][] = [];
+    groups.forEach(groupAssets => result.push(groupAssets));
+    
+    return { 
+      filteredAssets: filtered, 
+      displayGroups: result 
+    };
+  }, [assets, activeFilters, search]);
 
   const toggleFilter = (f: string, mode: 'single' | 'multi' = 'multi') => {
     if (!f) {
@@ -453,26 +487,33 @@ function MediaKitContent() {
               ) : filteredAssets.length > 0 ? (
                 <motion.div
                   layout
-                  className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+                  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
                 >
-                  {filteredAssets.slice(0, visibleCount).map((asset, index) => (
-                    <motion.div
-                      key={asset.id}
-                      layout
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <AssetCard
-                        asset={asset}
-                        onDelete={handleDelete}
-                        onTagClick={(tag) => toggleFilter(tag, 'multi')}
-                        onUpdate={handleUpdate}
-                        onPreview={() => openPreview(index)}
-                      />
-                    </motion.div>
-                  ))}
+                  {displayGroups.slice(0, visibleCount).map((group, index) => {
+                    // Find actual index of the first asset in the filteredAssets array for the Lightbox
+                    const actualIndex = filteredAssets.findIndex(a => a.id === group[0].id);
+                    return (
+                      <motion.div
+                        key={group[0].id}
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <AssetCard
+                          assets={group}
+                          onDelete={handleDelete}
+                          onTagClick={(tag) => toggleFilter(tag, 'multi')}
+                          onUpdate={handleUpdate}
+                          onPreview={(assetId: number) => {
+                            const idx = filteredAssets.findIndex(a => a.id === assetId);
+                            openPreview(idx !== -1 ? idx : 0);
+                          }}
+                        />
+                      </motion.div>
+                    );
+                  })}
                 </motion.div>
               ) : (
                 <motion.div
@@ -494,13 +535,13 @@ function MediaKitContent() {
             </AnimatePresence>
 
             {/* Load More Button */}
-            {filteredAssets.length > visibleCount && (
-              <div className="flex justify-center pt-8 pb-4">
+            {visibleCount < displayGroups.length && (
+              <div className="flex justify-center mt-12 pb-12">
                 <button
-                  onClick={() => setVisibleCount(prev => prev + 12)}
+                  onClick={() => setVisibleCount((prev) => prev + 12)}
                   className="px-6 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:text-blue-600 hover:border-blue-200 dark:hover:border-blue-800 shadow-sm transition-all"
                 >
-                  Tải thêm ({filteredAssets.length - visibleCount} ảnh)
+                  Tải thêm ({displayGroups.length - visibleCount} nhóm/ảnh)
                 </button>
               </div>
             )}

@@ -7,19 +7,16 @@ import { toast } from "sonner";
 import { cn, copyToClipboard } from "@/lib/utils";
 
 interface AssetCardProps {
-  asset: {
-    id: number;
-    title: string;
-    fileUrl: string;
-    tags: string;
-  };
+  assets: any[];
   onDelete: (id: number) => Promise<void>;
   onTagClick: (tag: string) => void;
   onUpdate: (id: number, title: string, tags: string) => Promise<void>;
-  onPreview: () => void;
+  onPreview: (assetId: number) => void;
 }
 
-export function AssetCard({ asset, onDelete, onTagClick, onUpdate, onPreview }: AssetCardProps) {
+export function AssetCard({ assets, onDelete, onTagClick, onUpdate, onPreview }: AssetCardProps) {
+  const asset = assets[0]; // Main asset
+  const isGroup = assets.length > 1;
   const [isHovered, setIsHovered] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -75,7 +72,7 @@ export function AssetCard({ asset, onDelete, onTagClick, onUpdate, onPreview }: 
     >
       {/* Image Container */}
       <div
-        onClick={onPreview}
+        onClick={() => onPreview(asset.id)}
         className="relative aspect-[3/2] overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center cursor-zoom-in"
       >
         {isImage ? (
@@ -87,7 +84,13 @@ export function AssetCard({ asset, onDelete, onTagClick, onUpdate, onPreview }: 
         ) : (
           <div className="flex flex-col items-center gap-2 text-blue-500 transition-transform duration-700 group-hover:scale-110">
             <FileText size={48} />
-            <span className="text-xs font-bold text-zinc-500 uppercase">{asset.title.split('.').pop()}</span>
+            <span className="text-xs font-bold text-zinc-500 uppercase">{asset.title?.split('.').pop()}</span>
+          </div>
+        )}
+        
+        {isGroup && (
+          <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-md px-2 py-1 rounded-md z-10 shadow-lg border border-white/10">
+            <span className="text-[10px] font-bold text-white tracking-wide">{assets.length} images</span>
           </div>
         )}
 
@@ -98,43 +101,67 @@ export function AssetCard({ asset, onDelete, onTagClick, onUpdate, onPreview }: 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center gap-3 p-4"
+              className="absolute inset-0 bg-black/10 transition-colors flex items-center justify-center gap-2 p-4"
             >
               <button
-                onClick={handleCopy}
-                className="p-3 bg-white/90 hover:bg-white text-zinc-900 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95"
+                onClick={(e) => { e.stopPropagation(); handleCopy(); }}
+                className="p-2 bg-white/90 hover:bg-white text-zinc-900 rounded-full shadow-md transition-all hover:scale-110 active:scale-95"
                 title="Copy Link"
               >
-                {copied ? <Check size={18} className="text-green-600" /> : <Copy size={18} />}
+                {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
               </button>
 
               <button
-                onClick={handleDownload}
-                className="p-3 bg-white/90 hover:bg-white text-zinc-900 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95"
+                onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+                className="p-2 bg-white/90 hover:bg-white text-zinc-900 rounded-full shadow-md transition-all hover:scale-110 active:scale-95"
                 title="Download"
               >
-                <Download size={18} />
+                <Download size={14} />
               </button>
 
               <button
-                onClick={() => window.open(asset.fileUrl, "_blank")}
-                className="p-3 bg-white/90 hover:bg-white text-zinc-900 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95"
+                onClick={(e) => { e.stopPropagation(); window.open(asset.fileUrl, "_blank"); }}
+                className="p-2 bg-white/90 hover:bg-white text-zinc-900 rounded-full shadow-md transition-all hover:scale-110 active:scale-95"
                 title="Open Original"
               >
-                <ExternalLink size={18} />
+                <ExternalLink size={14} />
               </button>
 
               <button
-                onClick={() => onDelete(asset.id)}
-                className="p-3 bg-red-500/90 hover:bg-red-500 text-white rounded-full shadow-lg transition-all hover:scale-110 active:scale-95"
+                onClick={(e) => { e.stopPropagation(); onDelete(asset.id); }}
+                className="p-2 bg-red-500/90 hover:bg-red-500 text-white rounded-full shadow-md transition-all hover:scale-110 active:scale-95"
                 title="Delete"
               >
-                <Trash2 size={18} />
+                <Trash2 size={14} />
               </button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Thumbnails for Groups */}
+      {isGroup && (
+        <div className={cn(
+          "grid gap-[2px] mt-[2px]",
+          assets.length === 2 ? "grid-cols-1" :
+          assets.length === 3 ? "grid-cols-2" :
+          "grid-cols-3"
+        )}>
+          {assets.slice(1, 4).map((subAsset, idx) => (
+            <div 
+              key={idx} 
+              className="relative aspect-[4/3] bg-zinc-100 dark:bg-zinc-800 overflow-hidden cursor-zoom-in" 
+              onClick={(e) => { e.stopPropagation(); onPreview(subAsset.id); }}
+            >
+              {subAsset.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) ? (
+                <img src={getThumb(subAsset.fileUrl)} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-zinc-200 dark:bg-zinc-800"><FileText size={20} className="text-zinc-400"/></div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Info Section */}
       <div className="p-3 space-y-2">
@@ -188,12 +215,15 @@ export function AssetCard({ asset, onDelete, onTagClick, onUpdate, onPreview }: 
               ))}
             </div>
 
-            <button
-              onClick={() => setIsEditing(true)}
-              className="text-[9px] font-black text-blue-600/70 hover:text-blue-600 dark:text-blue-400/70 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-2 py-1 rounded-lg transition-all whitespace-nowrap uppercase tracking-wider"
-            >
-              Sửa
-            </button>
+            {/* Edit Button */}
+            {!isGroup && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="text-[9px] font-black text-blue-600/70 hover:text-blue-600 dark:text-blue-400/70 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-2 py-1 rounded-lg transition-all whitespace-nowrap uppercase tracking-wider"
+              >
+                Sửa
+              </button>
+            )}
           </div>
         )}
       </div>
