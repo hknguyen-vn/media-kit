@@ -1,30 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Trash2, Download, ExternalLink, Hash, Check, FileText } from "lucide-react";
+import { Copy, Trash2, Download, ExternalLink, Hash, Check, FileText, Plus, Loader2, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { cn, copyToClipboard } from "@/lib/utils";
 
 interface AssetCardProps {
   assets: any[];
-  onDelete: (id: number) => Promise<void>;
+  onDelete: (id: number) => void;
   onTagClick: (tag: string) => void;
   onUpdate: (id: number, title: string, tags: string) => Promise<void>;
-  onPreview: (assetId: number) => void;
+  onPreview: (id: number) => void;
   onDrillDown?: () => void;
+  onUploadFiles?: (files: FileList, tags: string) => Promise<void>;
 }
 
-export function AssetCard({ assets, onDelete, onTagClick, onUpdate, onPreview, onDrillDown }: AssetCardProps) {
+export function AssetCard({ 
+  assets, 
+  onDelete, 
+  onTagClick, 
+  onUpdate, 
+  onPreview, 
+  onDrillDown,
+  onUploadFiles 
+}: AssetCardProps) {
   const asset = assets[0]; // Main asset
   const isGroup = assets.length > 1;
   const [isHovered, setIsHovered] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(asset.title);
   const [editTags, setEditTags] = useState(asset.tags || "");
   const [isSaving, setIsSaving] = useState(false);
+
+  const handleQuickUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files.length > 0 && onUploadFiles) {
+      const files = e.target.files;
+      setIsUploading(true);
+      try {
+        await onUploadFiles(files, asset.tags || "");
+      } catch (err) {
+        toast.error("Lỗi upload nhanh");
+        console.error("Quick upload error:", err);
+      } finally {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    }
+  };
 
   const handleCopy = async () => {
     const success = await copyToClipboard(asset.fileUrl);
@@ -69,8 +97,20 @@ export function AssetCard({ assets, onDelete, onTagClick, onUpdate, onPreview, o
       exit={{ opacity: 0, scale: 0.95 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group relative bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all duration-500"
+      className={cn(
+        "group relative bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 transition-all hover:shadow-2xl hover:-translate-y-1",
+        isGroup ? "ring-2 ring-blue-500/10" : ""
+      )}
     >
+      {/* Hidden input for quick upload - Keep outside hover to avoid unmounting */}
+      <input 
+        type="file" 
+        multiple 
+        className="hidden" 
+        ref={fileInputRef}
+        onChange={handleQuickUpload}
+      />
+
       {/* Image Container */}
       <div
         onClick={() => onPreview(asset.id)}
@@ -116,6 +156,17 @@ export function AssetCard({ assets, onDelete, onTagClick, onUpdate, onPreview, o
               >
                 <ExternalLink size={13} />
               </button>
+
+              {onUploadFiles && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                  disabled={isUploading}
+                  className="p-1.5 bg-blue-600/80 backdrop-blur-md hover:bg-blue-600 text-white rounded-md transition-all border border-white/10 flex items-center justify-center min-w-[28px]"
+                  title="Upload nhanh vào album này"
+                >
+                  {isUploading ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+                </button>
+              )}
 
               <button
                 onClick={(e) => { 

@@ -303,8 +303,15 @@ function MediaKitContent() {
     }
   };
 
+  const handleQuickUpload = async (files: FileList, tagsString: string) => {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    toast.info(`Bắt đầu tải lên ${fileArray.length} ảnh vào nhóm...`);
+    await handleUpload(fileArray, tagsString);
+  };
+
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] text-zinc-900 dark:text-zinc-100 pb-20">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 font-sans selection:bg-blue-100 selection:text-blue-700 pb-20">
       {/* Header Area */}
       <div className="relative pt-10 pb-6 px-6">
         <div className="relative max-w-7xl mx-auto text-center space-y-2">
@@ -568,6 +575,7 @@ function MediaKitContent() {
                           onDelete={handleDelete}
                           onTagClick={(tag) => toggleFilter(tag, 'multi')}
                           onUpdate={handleUpdate}
+                          onUploadFiles={handleQuickUpload}
                           onPreview={(assetId: number) => {
                             const idx = filteredAssets.findIndex(a => a.id === assetId);
                             openPreview(idx !== -1 ? idx : 0);
