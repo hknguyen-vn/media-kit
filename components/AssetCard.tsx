@@ -107,38 +107,27 @@ export function AssetCard({ assets, onDelete, onTagClick, onUpdate, onPreview, o
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/10 transition-colors flex items-center justify-center gap-2 p-4"
+              className="absolute inset-0 bg-black/5 flex items-end justify-start gap-2 p-3"
             >
               <button
-                onClick={(e) => { e.stopPropagation(); handleCopy(); }}
-                className="p-2 bg-white/90 hover:bg-white text-zinc-900 rounded-full shadow-md transition-all hover:scale-110 active:scale-95"
-                title="Copy Link"
-              >
-                {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
-              </button>
-
-              <button
-                onClick={(e) => { e.stopPropagation(); handleDownload(); }}
-                className="p-2 bg-white/90 hover:bg-white text-zinc-900 rounded-full shadow-md transition-all hover:scale-110 active:scale-95"
-                title="Download"
-              >
-                <Download size={14} />
-              </button>
-
-              <button
                 onClick={(e) => { e.stopPropagation(); window.open(asset.fileUrl, "_blank"); }}
-                className="p-2 bg-white/90 hover:bg-white text-zinc-900 rounded-full shadow-md transition-all hover:scale-110 active:scale-95"
+                className="p-1.5 bg-black/40 backdrop-blur-md hover:bg-black/60 text-white/80 hover:text-white rounded-md transition-all border border-white/10"
                 title="Open Original"
               >
-                <ExternalLink size={14} />
+                <ExternalLink size={13} />
               </button>
 
               <button
-                onClick={(e) => { e.stopPropagation(); onDelete(asset.id); }}
-                className="p-2 bg-red-500/90 hover:bg-red-500 text-white rounded-full shadow-md transition-all hover:scale-110 active:scale-95"
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  if (window.confirm("Bạn có chắc chắn muốn xóa tệp này? Thao tác này không thể hoàn tác.")) {
+                    onDelete(asset.id); 
+                  }
+                }}
+                className="p-1.5 bg-black/40 backdrop-blur-md hover:bg-red-500 text-white/80 hover:text-white rounded-md transition-all border border-white/10"
                 title="Delete"
               >
-                <Trash2 size={14} />
+                <Trash2 size={13} />
               </button>
             </motion.div>
           )}
@@ -209,16 +198,42 @@ export function AssetCard({ assets, onDelete, onTagClick, onUpdate, onPreview, o
           <div className="flex items-center justify-between gap-4">
             {/* Tags */}
             <div className="flex flex-wrap gap-1 flex-1">
-              {asset.tags?.split(",").filter(Boolean).map((tag: string, i: number) => (
-                <button
-                  key={i}
-                  onClick={() => onTagClick(tag.trim())}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-50 dark:bg-zinc-800/50 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors border border-zinc-100 dark:border-zinc-800"
-                >
-                  {tag.trim().startsWith("#") ? <Hash size={9} /> : null}
-                  {tag.trim().replace("#", "")}
-                </button>
-              ))}
+              {asset.tags?.split(",").filter(Boolean).map((tagStr: string, i: number) => {
+                const tag = tagStr.trim();
+                const isCategory = tag.startsWith("c:");
+                const isProject = tag.startsWith("p:");
+                const isHash = tag.startsWith("#");
+                
+                let tagStyles = "bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 border-zinc-100 dark:border-zinc-800";
+                
+                if (isCategory) {
+                  const cat = tag.replace("c:", "").toLowerCase();
+                  if (cat.includes("project") || cat.includes("dự án")) tagStyles = "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100/50 dark:border-blue-900/50 hover:bg-blue-100";
+                  else if (cat.includes("factory") || cat.includes("nhà máy")) tagStyles = "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100/50 dark:border-emerald-900/50 hover:bg-emerald-100";
+                  else if (cat.includes("machine") || cat.includes("công nghệ")) tagStyles = "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100/50 dark:border-amber-900/50 hover:bg-amber-100";
+                  else if (cat.includes("process") || cat.includes("quy trình")) tagStyles = "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 border-cyan-100/50 dark:border-cyan-900/50 hover:bg-cyan-100";
+                  else if (cat.includes("profile") || cat.includes("hồ sơ")) tagStyles = "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-100/50 dark:border-purple-900/50 hover:bg-purple-100";
+                  else tagStyles = "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200";
+                } else if (isProject) {
+                  tagStyles = "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-100/50 dark:border-indigo-900/50 hover:bg-indigo-100";
+                } else if (isHash) {
+                  tagStyles = "bg-white dark:bg-transparent text-zinc-400 dark:text-zinc-500 hover:text-blue-500 hover:border-blue-200 dark:hover:border-blue-800 border-zinc-100 dark:border-zinc-800";
+                }
+
+                return (
+                  <button
+                    key={i}
+                    onClick={() => onTagClick(tag)}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black transition-all border shadow-sm uppercase tracking-tight",
+                      tagStyles
+                    )}
+                  >
+                    {isHash ? <Hash size={9} strokeWidth={3} /> : null}
+                    {tag.replace("c:", "").replace("p:", "").replace("#", "")}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Edit Button */}

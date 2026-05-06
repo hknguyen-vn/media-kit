@@ -111,6 +111,8 @@ function MediaKitContent() {
           assetKey = `${cTag}:::${pTag}`;
         } else if (otherTags.length > 0) {
           assetKey = `${cTag}:::tags:${otherTags.sort().join('|')}`;
+        } else if (cTag !== 'c:none') {
+          assetKey = `${cTag}:::general`;
         } else {
           assetKey = `single_${a.id}`;
         }
@@ -145,8 +147,11 @@ function MediaKitContent() {
       } else if (otherTags.length > 0) {
         // Mode 2: Group by Category + Hashtags (when no project)
         groupKey = `${cTag}:::tags:${otherTags.sort().join('|')}`;
+      } else if (cTag !== 'c:none') {
+        // Mode 3: Group by Category only (General Bucket)
+        groupKey = `${cTag}:::general`;
       } else {
-        // Mode 3: Individual Asset
+        // Mode 4: Truly individual asset
         groupKey = `single_${asset.id}`;
       }
 
@@ -350,7 +355,7 @@ function MediaKitContent() {
         </div>
 
         {/* Floating/Corner Upload Zone */}
-        <div className="hidden md:block absolute top-10 right-6 z-30 w-full max-w-xs md:max-w-md pointer-events-none">
+        <div className="hidden md:block absolute top-10 right-6 z-50 w-full max-w-xs md:max-w-md pointer-events-none">
           <div className="pointer-events-auto">
             <UploadZone 
               onUpload={handleUpload} 
@@ -362,8 +367,8 @@ function MediaKitContent() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex gap-12">
+      <div className="max-w-[1600px] mx-auto px-6">
+        <div className="flex gap-8">
           {/* Sidebar */}
           <Sidebar
             assets={assets}
@@ -375,24 +380,35 @@ function MediaKitContent() {
           <div className="flex-1 space-y-8">
             {/* Space reserved for search and gallery */}
 
-            {/* Toolbar */}
-            <div className="space-y-3 sticky top-6 z-20">
+            {/* Enhanced Sticky Header Area */}
+            <div className="sticky top-6 z-30 space-y-4 pb-4 -mx-4 px-4 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl rounded-b-3xl">
               <div className={cn(
-                "bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-sm transition-all duration-300",
-                isSearchFocused ? "shadow-2xl ring-1 ring-blue-500/20" : ""
+                "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-xl transition-all duration-500",
+                isSearchFocused ? "ring-2 ring-blue-500/20 shadow-blue-500/10" : "shadow-sm"
               )}>
                 <div className="flex items-center gap-4 p-2">
                   <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                    <Search className={cn(
+                      "absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300",
+                      isSearchFocused ? "text-blue-500" : "text-zinc-400"
+                    )} size={18} />
                     <input
                       type="text"
-                      placeholder="Tìm kiếm tên dự án hoặc từ khóa / hashtag..."
+                      placeholder="Tìm kiếm dự án, hashtag hoặc tên file..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       onFocus={() => setIsSearchFocused(true)}
                       onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                      className="w-full pl-12 pr-4 py-3 bg-transparent border-none focus:ring-0 text-sm placeholder:text-zinc-400 outline-none"
+                      className="w-full pl-12 pr-10 py-4 bg-transparent border-none focus:ring-0 text-sm font-medium placeholder:text-zinc-400 outline-none"
                     />
+                    {search && (
+                      <button 
+                        onClick={() => setSearch("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
                   </div>
 
                   <button
@@ -422,23 +438,23 @@ function MediaKitContent() {
                                 <LayoutGrid size={14} className="text-blue-500" />
                                 <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Chuyên mục nổi bật</span>
                               </div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                                 {[
                                   { id: "c:project", label: "Dự án", icon: Zap, color: "text-blue-500" },
-                                  { id: "c:machine", label: "MMTB-Công nghệ", icon: Zap, color: "text-amber-500" },
-                                  { id: "c:factory", label: "Nhà máy HGPT", icon: Zap, color: "text-emerald-500" },
+                                  { id: "c:machine", label: "Công nghệ", icon: Zap, color: "text-amber-500" },
+                                  { id: "c:factory", label: "Nhà máy", icon: Zap, color: "text-emerald-500" },
                                   { id: "c:process", label: "Quy trình", icon: Zap, color: "text-cyan-500" },
-                                  { id: "c:profile", label: "Hồ sơ năng lực", icon: Zap, color: "text-purple-500" },
+                                  { id: "c:profile", label: "Hồ sơ NL", icon: Zap, color: "text-purple-500" },
                                 ].map((cat) => (
                                   <button
                                     key={cat.id}
                                     onClick={() => toggleFilter(cat.id, 'multi')}
-                                    className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/30 hover:bg-white dark:hover:bg-zinc-800 rounded-2xl text-left transition-all border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 group shadow-sm hover:shadow-md"
+                                    className="flex items-center gap-2 p-2 bg-zinc-50 dark:bg-zinc-800/30 hover:bg-white dark:hover:bg-zinc-800 rounded-xl text-left transition-all border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 group shadow-sm hover:shadow-md"
                                   >
-                                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                      <cat.icon size={16} className={cat.color} />
+                                    <div className="w-7 h-7 rounded-lg bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                      <cat.icon size={12} className={cat.color} />
                                     </div>
-                                    <span className="text-xs font-black text-zinc-700 dark:text-zinc-200">{cat.label}</span>
+                                    <span className="text-[10px] font-black text-zinc-700 dark:text-zinc-200 leading-tight">{cat.label}</span>
                                   </button>
                                 ))}
                               </div>
@@ -499,21 +515,24 @@ function MediaKitContent() {
 
               {/* Active Filters Tokens */}
               {activeFilters.length > 0 && (
-                <div className="flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex flex-wrap items-center gap-2 px-2 animate-in fade-in slide-in-from-top-2 duration-500">
+                  <div className="flex items-center gap-1.5 px-2 py-1 text-zinc-400">
+                    <Filter size={12} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Đang lọc:</span>
+                  </div>
                   {activeFilters.map(f => (
                     <button
                       key={f}
                       onClick={() => toggleFilter(f)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-[10px] font-bold text-blue-600 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all group"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-xl text-[10px] font-black text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all group shadow-sm"
                     >
-                      <Filter size={10} className="text-zinc-400 group-hover:text-blue-500" />
                       {f.replace("c:", "").replace("p:", "").replace("tags:", "").toUpperCase()}
-                      <X size={10} className="text-zinc-400 group-hover:text-red-500" />
+                      <X size={10} className="text-blue-400 group-hover:text-red-500 transition-colors" />
                     </button>
                   ))}
                   <button
                     onClick={() => toggleFilter("")}
-                    className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-all"
+                    className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 hover:text-red-500 transition-all ml-auto"
                   >
                     Xóa tất cả
                   </button>
@@ -564,6 +583,8 @@ function MediaKitContent() {
                               groupKey = `${cTag}:::${pTag}`;
                             } else if (otherTags.length > 0) {
                               groupKey = `${cTag}:::tags:${otherTags.sort().join('|')}`;
+                            } else if (cTag !== 'c:none') {
+                              groupKey = `${cTag}:::general`;
                             } else {
                               groupKey = `single_${group[0].id}`;
                             }
