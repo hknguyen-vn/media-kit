@@ -432,6 +432,25 @@ function MediaKitContent() {
                       <div className="p-5 max-h-[400px] overflow-y-auto custom-scrollbar">
                         {search.length === 0 ? (
                           <div className="space-y-6">
+                            {/* Popular Hashtags */}
+                            <div>
+                              <div className="flex items-center gap-2 mb-4">
+                                <TrendingUp size={14} className="text-purple-500" />
+                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Hashtag phổ biến</span>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {hashtagsList.slice(0, 15).map((h) => (
+                                  <button
+                                    key={h}
+                                    onClick={() => toggleFilter(h, 'multi')}
+                                    className="px-3 py-2 bg-white dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-xs font-bold transition-all border border-zinc-100 dark:border-zinc-800 shadow-sm"
+                                  >
+                                    {h}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
                             {/* Categories Shortcuts */}
                             <div>
                               <div className="flex items-center gap-2 mb-4">
@@ -455,25 +474,6 @@ function MediaKitContent() {
                                       <cat.icon size={12} className={cat.color} />
                                     </div>
                                     <span className="text-[10px] font-black text-zinc-700 dark:text-zinc-200 leading-tight">{cat.label}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Popular Hashtags */}
-                            <div>
-                              <div className="flex items-center gap-2 mb-4">
-                                <TrendingUp size={14} className="text-purple-500" />
-                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Hashtag phổ biến</span>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {hashtagsList.slice(0, 15).map((h) => (
-                                  <button
-                                    key={h}
-                                    onClick={() => toggleFilter(h, 'multi')}
-                                    className="px-3 py-2 bg-white dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-xs font-bold transition-all border border-zinc-100 dark:border-zinc-800 shadow-sm"
-                                  >
-                                    {h}
                                   </button>
                                 ))}
                               </div>
