@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, X, Hash, Image as ImageIcon, Loader2, Briefcase, Factory, Cpu, Plus, FileText, LayoutList } from "lucide-react";
+import { Upload, X, Hash, Image as ImageIcon, Loader2, Briefcase, Factory, Cpu, Plus, FileText, LayoutList, ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface UploadZoneProps {
   onUpload: (files: File[], tags: string) => Promise<void>;
   loading: boolean;
-  existingProjects: string[]; // Pass existing projects to suggest
+  existingProjects: string[]; 
+  existingHashtags: string[];
 }
 
 const CATEGORIES = [
@@ -21,16 +22,28 @@ const CATEGORIES = [
   { id: "other", label: "Khác", icon: ImageIcon },
 ];
 
-export function UploadZone({ onUpload, loading, existingProjects }: UploadZoneProps) {
+export function UploadZone({ onUpload, loading, existingProjects, existingHashtags }: UploadZoneProps) {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [category, setCategory] = useState("project");
   const [projectName, setProjectName] = useState("");
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+  
   const inputRef = useRef<HTMLInputElement>(null);
+  const tagInputRef = useRef<HTMLInputElement>(null);
 
   // Toggle for expanded view
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const filteredSuggestions = useMemo(() => {
+    const input = tagInput.toLowerCase().replace("#", "");
+    if (!input) return existingHashtags.filter(h => !tags.includes(h)).slice(0, 5);
+    return existingHashtags
+      .filter(h => h.toLowerCase().includes(input) && !tags.includes(h))
+      .slice(0, 10);
+  }, [tagInput, existingHashtags, tags]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -75,13 +88,39 @@ export function UploadZone({ onUpload, loading, existingProjects }: UploadZonePr
     }
   };
 
+  const addTag = (tag: string) => {
+    const trimmed = tag.trim().replace(/^#/, "");
+    if (!trimmed) return;
+    
+    const cleanTag = `#${trimmed}`;
+    if (!tags.includes(cleanTag)) {
+      setTags([...tags, cleanTag]);
+    }
+    setTagInput("");
+    // Re-focus to keep suggestions active
+    tagInputRef.current?.focus();
+  };
+
+  const removeTag = (tag: string) => {
+    setTags(tags.filter(t => t !== tag));
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === "Enter" || e.key === " " || e.key === ",") && tagInput) {
+      e.preventDefault();
+      addTag(tagInput);
+    } else if (e.key === "Backspace" && !tagInput && tags.length > 0) {
+      removeTag(tags[tags.length - 1]);
+    }
+  };
+
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
 
     const finalTags = [
       `c:${category}`,
       projectName ? `p:${projectName.trim()}` : "",
-      ...tags.split(",").map(t => t.trim()).filter(Boolean).map(t => t.startsWith("#") ? t : `#${t}`)
+      ...tags
     ].filter(Boolean).join(", ");
 
     await onUpload(selectedFiles, finalTags);
@@ -89,7 +128,8 @@ export function UploadZone({ onUpload, loading, existingProjects }: UploadZonePr
     // Reset after success
     setSelectedFiles([]);
     setProjectName("");
-    setTags("");
+    setTags([]);
+    setTagInput("");
     setIsExpanded(false);
   };
 
@@ -165,7 +205,7 @@ export function UploadZone({ onUpload, loading, existingProjects }: UploadZonePr
                     </div>
                     <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
                       {selectedFiles.map((file, idx) => (
-                        <div key={idx} className="relative group w-16 h-16 rounded-lg overflow-hidden border border-zinc-200">
+                        <div key={idx} className="relative group w-16 h-16 rounded-lg overflow-hidden border border-zinc-200 shadow-sm">
                           {file.type.startsWith("image/") ? (
                             <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
                           ) : (
@@ -188,64 +228,152 @@ export function UploadZone({ onUpload, loading, existingProjects }: UploadZonePr
 
               {/* Form Config */}
               {selectedFiles.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="md:col-span-3 space-y-1.5">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Phân loại</label>
-                    <div className="flex flex-wrap gap-1.5">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                  {/* Category Selection */}
+                  <div className="md:col-span-12 space-y-2">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">1. Phân loại nội dung</label>
+                    <div className="flex flex-wrap gap-2">
                       {CATEGORIES.map((cat) => (
                         <button
                           key={cat.id}
                           onClick={() => setCategory(cat.id)}
                           className={cn(
-                            "flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold transition-all border",
-                            category === cat.id ? "bg-blue-50 border-blue-600 text-blue-700" : "bg-white dark:bg-zinc-800 border-zinc-200 text-zinc-600"
+                            "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border",
+                            category === cat.id 
+                              ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                              : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-blue-400"
                           )}
                         >
-                          <cat.icon size={12} /> {cat.label}
+                          <cat.icon size={14} /> {cat.label}
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <div className="md:col-span-4 space-y-1.5">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Tên Dự án (Gõ hoặc chọn)</label>
-                    <input
-                      type="text"
-                      list="projects-list"
-                      placeholder="VD: VinFast Hai Phong..."
-                      value={projectName}
-                      onChange={(e) => setProjectName(e.target.value)}
-                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
-                    />
-                    <datalist id="projects-list">
-                      {existingProjects.map((p, i) => (
-                        <option key={i} value={p} />
-                      ))}
-                    </datalist>
-                  </div>
-
-                  <div className="md:col-span-3 space-y-1.5">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Hashtag (#)</label>
-                    <div className="relative">
-                      <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" size={12} />
+                  {/* Project Name */}
+                  <div className="md:col-span-5 space-y-2">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">2. Tên dự án (Nếu có)</label>
+                    <div className="relative group">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-500 transition-colors">
+                        <Briefcase size={14} />
+                      </div>
                       <input
                         type="text"
-                        placeholder="thep, may-cat..."
-                        value={tags}
-                        onChange={(e) => setTags(e.target.value)}
-                        className="w-full pl-7 pr-3 py-2 bg-zinc-50 dark:bg-zinc-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+                        list="projects-list"
+                        placeholder="VD: VinFast Hai Phong..."
+                        value={projectName}
+                        onChange={(e) => setProjectName(e.target.value)}
+                        className="w-full pl-10 pr-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
                       />
+                      <datalist id="projects-list">
+                        {existingProjects.map((p, i) => (
+                          <option key={i} value={p} />
+                        ))}
+                      </datalist>
                     </div>
                   </div>
 
-                  <div className="md:col-span-2 flex items-end">
-                    <button
-                      disabled={loading}
-                      onClick={handleUpload}
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2"
+                  {/* Hashtags Selection */}
+                  <div className="md:col-span-7 space-y-2">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">3. Hashtag (#)</label>
+                    <div 
+                      onClick={() => tagInputRef.current?.focus()}
+                      className={cn(
+                        "flex flex-wrap items-center gap-2 p-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl min-h-[42px] focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:border-blue-500 transition-all cursor-text",
+                        showTagSuggestions && "rounded-b-none"
+                      )}
                     >
-                      {loading ? <Loader2 className="animate-spin" size={14} /> : <Upload size={14} />}
-                      Upload {selectedFiles.length} ảnh
+                      <AnimatePresence>
+                        {tags.map((tag) => (
+                          <motion.span
+                            key={tag}
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold border border-blue-200/50 dark:border-blue-800/50"
+                          >
+                            {tag}
+                            <button onClick={() => removeTag(tag)} className="p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded transition-colors">
+                              <X size={10} />
+                            </button>
+                          </motion.span>
+                        ))}
+                      </AnimatePresence>
+                      
+                      <div className="relative flex-1 min-w-[120px]">
+                        <input
+                          ref={tagInputRef}
+                          type="text"
+                          placeholder="Gõ tag..."
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyDown={handleTagKeyDown}
+                          onFocus={() => setShowTagSuggestions(true)}
+                          onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
+                          className="w-full bg-transparent border-none focus:ring-0 text-sm outline-none py-1"
+                        />
+                        
+                        {/* Suggestions Dropdown */}
+                        <AnimatePresence>
+                          {showTagSuggestions && filteredSuggestions.length > 0 && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="absolute top-full left-[-8px] right-[-8px] mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl z-50 overflow-hidden"
+                            >
+                              <div className="p-1 max-h-48 overflow-y-auto">
+                                <p className="text-[9px] font-black text-zinc-400 uppercase p-2 tracking-widest">Gợi ý hashtag</p>
+                                  {filteredSuggestions.map((suggestion) => (
+                                  <button
+                                    key={suggestion}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault(); // Prevent blur
+                                      addTag(suggestion);
+                                    }}
+                                    className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-sm text-zinc-700 dark:text-zinc-300 rounded-lg transition-colors group"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Hash size={12} className="text-zinc-400 group-hover:text-blue-500" />
+                                      {suggestion.replace("#", "")}
+                                    </div>
+                                    <Plus size={12} className="text-zinc-300 opacity-0 group-hover:opacity-100 transition-all" />
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                    {tags.length === 0 && !tagInput && (
+                      <p className="text-[10px] text-zinc-400 italic">Nhấn Enter để thêm tag mới hoặc chọn từ gợi ý</p>
+                    )}
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="md:col-span-12 pt-2">
+                    <button
+                      disabled={loading || selectedFiles.length === 0}
+                      onClick={handleUpload}
+                      className={cn(
+                        "w-full py-3 rounded-xl text-sm font-black shadow-xl transition-all flex items-center justify-center gap-3",
+                        loading 
+                          ? "bg-zinc-100 text-zinc-400 cursor-not-allowed" 
+                          : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20 active:scale-[0.98]"
+                      )}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="animate-spin" size={18} />
+                          <span>Đang xử lý {selectedFiles.length} file...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={18} />
+                          <span>Bắt đầu Upload ({selectedFiles.length} file)</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>

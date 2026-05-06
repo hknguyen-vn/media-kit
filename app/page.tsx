@@ -99,13 +99,13 @@ function MediaKitContent() {
     const drillDownFilter = activeFilters.find(f => f.startsWith('cluster:'));
     if (drillDownFilter) {
       const matchKey = drillDownFilter.replace('cluster:', '');
-      
+
       filtered = assets.filter(a => {
         const tags = a.tags?.split(',').map((t: string) => t.trim()).filter(Boolean) || [];
         const cTag = tags.find((t: string) => t.startsWith('c:')) || 'c:none';
         const pTag = tags.find((t: string) => t.startsWith('p:')) || 'p:none';
         const otherTags = tags.filter((t: string) => !t.startsWith('c:') && !t.startsWith('p:'));
-        
+
         let assetKey = '';
         if (pTag !== 'p:none') {
           assetKey = `${cTag}:::${pTag}`;
@@ -114,7 +114,7 @@ function MediaKitContent() {
         } else {
           assetKey = `single_${a.id}`;
         }
-        
+
         return assetKey === matchKey;
       });
       return { filteredAssets: filtered, displayGroups: filtered.map(a => [a]) }; // Ungrouped!
@@ -136,9 +136,9 @@ function MediaKitContent() {
       const cTag = tagsArray.find((t: string) => t.startsWith('c:')) || 'c:none';
       const pTag = tagsArray.find((t: string) => t.startsWith('p:')) || 'p:none';
       const otherTags = tagsArray.filter((t: string) => !t.startsWith('c:') && !t.startsWith('p:'));
-      
+
       let groupKey = '';
-      
+
       if (pTag !== 'p:none') {
         // Mode 1: Group by Project
         groupKey = `${cTag}:::${pTag}`;
@@ -352,7 +352,12 @@ function MediaKitContent() {
         {/* Floating/Corner Upload Zone */}
         <div className="hidden md:block absolute top-10 right-6 z-30 w-full max-w-xs md:max-w-md pointer-events-none">
           <div className="pointer-events-auto">
-            <UploadZone onUpload={handleUpload} loading={loading} existingProjects={projectsList} />
+            <UploadZone 
+              onUpload={handleUpload} 
+              loading={loading} 
+              existingProjects={projectsList} 
+              existingHashtags={hashtagsList}
+            />
           </div>
         </div>
       </div>
@@ -553,7 +558,7 @@ function MediaKitContent() {
                             const cTag = tagsArray.find((t: string) => t.startsWith('c:')) || 'c:none';
                             const pTag = tagsArray.find((t: string) => t.startsWith('p:')) || 'p:none';
                             const otherTags = tagsArray.filter((t: string) => !t.startsWith('c:') && !t.startsWith('p:'));
-                            
+
                             let groupKey = '';
                             if (pTag !== 'p:none') {
                               groupKey = `${cTag}:::${pTag}`;
@@ -562,7 +567,7 @@ function MediaKitContent() {
                             } else {
                               groupKey = `single_${group[0].id}`;
                             }
-                            
+
                             setActiveFilters(prev => {
                               const withoutCluster = prev.filter(f => !f.startsWith('cluster:'));
                               return [...withoutCluster, `cluster:${groupKey}`];
