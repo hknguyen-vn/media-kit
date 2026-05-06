@@ -9,8 +9,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Media Kit Management",
-  description: "Professional Visual Asset Management Tool",
+  title: "HGPT Media Kit",
+  description: "Kho tư liệu hình ảnh HGPT",
+  openGraph: {
+    title: "HGPT Media Kit",
+    description: "Kho tư liệu hình ảnh HGPT",
+  },
 };
 
 export default function RootLayout({
