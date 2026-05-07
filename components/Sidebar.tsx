@@ -33,7 +33,7 @@ const CATEGORIES = [
   { id: "c:factory", label: "Nhà máy HGPT", icon: Factory },
   { id: "c:process", label: "Quy trình", icon: LayoutList },
   { id: "c:machine", label: "MMTB - Công nghệ", icon: Cpu },
-  { id: "c:profile", label: "Hồ sơ năng lực", icon: FileText },
+  { id: "c:document", label: "Docs / Tải về", icon: FileText },
 ];
 
 export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps) {

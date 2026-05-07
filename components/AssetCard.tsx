@@ -84,10 +84,42 @@ export function AssetCard({
 
   const getThumb = (url?: string) => {
     if (!url) return "https://via.placeholder.com/600x400?text=No+Image";
+    
+    if (url.includes('drive.google.com')) {
+      const isFolder = url.includes('/folders/');
+      let driveId = "";
+      
+      if (url.includes('/file/d/')) {
+        driveId = url.split('/file/d/')[1].split('/')[0];
+      } else if (url.includes('/folders/')) {
+        driveId = url.split('/folders/')[1].split('?')[0];
+      } else if (url.includes('id=')) {
+        const urlObj = new URL(url);
+        driveId = urlObj.searchParams.get('id') || "";
+      }
+
+      if (isFolder) {
+        return "https://cdn-icons-png.flaticon.com/512/2965/2965306.png"; // Nice Google Drive Folder Icon
+      }
+      
+      if (driveId) {
+        return `https://drive.google.com/thumbnail?id=${driveId}&sz=w600`;
+      }
+      
+      return "https://www.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png";
+    }
+
+    // If PDF, convert to image for thumbnail (Cloudinary feature)
+    if (url.toLowerCase().split('?')[0].split('#')[0].endsWith('.pdf')) {
+      return url.replace(/\.pdf($|\?|#)/, ".jpg$1").replace("/upload/", "/upload/w_600,h_800,c_fill,pg_1,q_auto,f_auto/");
+    }
     return url.replace("/upload/", "/upload/w_600,h_400,c_fill,q_auto,f_auto/");
   };
 
-  const isImage = asset.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) != null;
+  const isDrive = asset.fileUrl?.includes('drive.google.com');
+  const isFolder = asset.fileUrl?.includes('/folders/');
+  const isImage = !isDrive && asset.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp|svg)/i) != null;
+  const isPDF = isDrive || asset.fileUrl?.toLowerCase().split('?')[0].split('#')[0].endsWith('.pdf');
 
   return (
     <motion.div
@@ -122,10 +154,49 @@ export function AssetCard({
             alt={asset.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
+        ) : isPDF ? (
+          <div className={cn(
+            "w-full h-full relative flex items-center justify-center group/pdf",
+            isDrive ? "bg-zinc-50 dark:bg-zinc-800/50" : "bg-white dark:bg-zinc-900"
+          )}>
+            <img
+              src={getThumb(asset.fileUrl)}
+              alt={asset.title}
+              className={cn(
+                "transition-transform duration-700 group-hover:scale-110",
+                isFolder
+                  ? "w-16 h-16 object-contain"
+                  : "w-full h-full object-cover opacity-90 group-hover:opacity-100"
+              )}
+            />
+            {/* Visual indicator that it's a PDF */}
+            {!isDrive && <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />}
+            <div className={cn(
+              "absolute top-3 left-3 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-lg border border-white/20 z-10",
+              isFolder ? "bg-blue-600 shadow-blue-500/20" : 
+              isDrive ? "bg-emerald-600 shadow-emerald-500/20" : "bg-red-600 shadow-red-500/20"
+            )}>
+              {isFolder ? "FOLDER" : isDrive ? "DRIVE" : "PDF"}
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+               <div className="p-3 bg-white/20 backdrop-blur-md rounded-full border border-white/30 text-white shadow-2xl">
+                 <FileText size={24} />
+               </div>
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col items-center gap-2 text-blue-500 transition-transform duration-700 group-hover:scale-110">
             <FileText size={48} />
             <span className="text-xs font-bold text-zinc-500 uppercase">{asset.title?.split('.').pop()}</span>
+          </div>
+        )}
+
+        {/* Document Title Overlay - only for c:document category */}
+        {asset.tags?.includes('c:document') && (
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent px-3 pt-6 pb-3 z-20 pointer-events-none">
+            <p className="text-white text-[11px] font-black leading-tight line-clamp-2 drop-shadow-lg tracking-tight">
+              {asset.title}
+            </p>
           </div>
         )}
 
@@ -263,7 +334,7 @@ export function AssetCard({
                   else if (cat.includes("factory") || cat.includes("nhà máy")) tagStyles = "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100/50 dark:border-emerald-900/50 hover:bg-emerald-100";
                   else if (cat.includes("machine") || cat.includes("công nghệ")) tagStyles = "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100/50 dark:border-amber-900/50 hover:bg-amber-100";
                   else if (cat.includes("process") || cat.includes("quy trình")) tagStyles = "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 border-cyan-100/50 dark:border-cyan-900/50 hover:bg-cyan-100";
-                  else if (cat.includes("profile") || cat.includes("hồ sơ")) tagStyles = "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-100/50 dark:border-purple-900/50 hover:bg-purple-100";
+                  else if (cat.includes("profile") || cat.includes("hồ sơ") || cat.includes("document")) tagStyles = "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100/50 dark:border-red-900/50 hover:bg-red-100";
                   else tagStyles = "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200";
                 } else if (isProject) {
                   tagStyles = "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-100/50 dark:border-indigo-900/50 hover:bg-indigo-100";

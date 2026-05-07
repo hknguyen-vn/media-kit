@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database, ChevronLeft, ChevronRight, Expand, Copy, Download } from "lucide-react";
+import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database, ChevronLeft, ChevronRight, Expand, Copy, Download, ExternalLink, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { uploadToCloudinary } from "@/lib/cloudinary";
@@ -222,10 +222,34 @@ function MediaKitContent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [previewIndex, filteredAssets.length]);
 
-  const handleUpload = async (files: File[], tagsString: string) => {
+  const handleUpload = async (files: File[], tagsString: string, linkData?: { title: string; url: string }) => {
     setLoading(true);
-    const toastId = toast.loading(`Đang tải lên ${files.length} ảnh...`);
 
+    if (linkData) {
+      const toastId = toast.loading("Đang lưu link tài liệu...");
+      try {
+        const res = await fetch("/api/assets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: linkData.title,
+            fileUrl: linkData.url,
+            tags: tagsString,
+          }),
+        });
+
+        if (!res.ok) throw new Error("Failed to save asset");
+        toast.success("Đã thêm tài liệu link thành công", { id: toastId });
+        loadAssets();
+      } catch (err) {
+        toast.error("Không thể lưu tài liệu", { id: toastId });
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    const toastId = toast.loading(`Đang tải lên ${files.length} ảnh...`);
     let successCount = 0;
     let failCount = 0;
 
@@ -364,10 +388,10 @@ function MediaKitContent() {
         {/* Floating/Corner Upload Zone */}
         <div className="hidden md:block absolute top-10 right-6 z-50 w-full max-w-xs md:max-w-md pointer-events-none">
           <div className="pointer-events-auto">
-            <UploadZone 
-              onUpload={handleUpload} 
-              loading={loading} 
-              existingProjects={projectsList} 
+            <UploadZone
+              onUpload={handleUpload}
+              loading={loading}
+              existingProjects={projectsList}
               existingHashtags={hashtagsList}
             />
           </div>
@@ -409,7 +433,7 @@ function MediaKitContent() {
                       className="w-full pl-12 pr-10 py-4 bg-transparent border-none focus:ring-0 text-sm font-medium placeholder:text-zinc-400 outline-none"
                     />
                     {search && (
-                      <button 
+                      <button
                         onClick={() => setSearch("")}
                         className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors"
                       >
@@ -470,7 +494,7 @@ function MediaKitContent() {
                                   { id: "c:machine", label: "Công nghệ", icon: Zap, color: "text-amber-500" },
                                   { id: "c:factory", label: "Nhà máy", icon: Zap, color: "text-emerald-500" },
                                   { id: "c:process", label: "Quy trình", icon: Zap, color: "text-cyan-500" },
-                                  { id: "c:profile", label: "Hồ sơ NL", icon: Zap, color: "text-purple-500" },
+                                  { id: "c:document", label: "Docs / Tải về", icon: Zap, color: "text-red-500" },
                                 ].map((cat) => (
                                   <button
                                     key={cat.id}
@@ -684,11 +708,93 @@ function MediaKitContent() {
               className="relative max-w-5xl w-full h-full flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
-                src={filteredAssets[previewIndex].fileUrl}
-                alt="Preview"
-                className="max-w-full max-h-full object-contain shadow-2xl rounded-lg"
-              />
+              {(() => {
+                const asset = filteredAssets[previewIndex];
+                const isDrive = asset.fileUrl?.includes('drive.google.com');
+                const isFolder = asset.fileUrl?.includes('/folders/');
+                const isPDF = isDrive || asset.fileUrl?.toLowerCase().split('?')[0].split('#')[0].endsWith('.pdf');
+                
+                if (isPDF) {
+                  // Handle Google Drive embedding if it's a Drive link
+                  let embedUrl = asset.fileUrl;
+                  if (isDrive) {
+                    // Convert various sharing link formats to preview link
+                    let driveId = "";
+
+                    if (asset.fileUrl.includes('/file/d/')) {
+                      driveId = asset.fileUrl.split('/file/d/')[1].split('/')[0];
+                    } else if (asset.fileUrl.includes('/folders/')) {
+                      driveId = asset.fileUrl.split('/folders/')[1].split('?')[0];
+                    } else if (asset.fileUrl.includes('id=')) {
+                      const urlObj = new URL(asset.fileUrl);
+                      driveId = urlObj.searchParams.get('id') || "";
+                    }
+                    
+                    if (driveId) {
+                      if (isFolder) {
+                        embedUrl = `https://drive.google.com/embeddedfolderview?id=${driveId}#grid`;
+                      } else {
+                        embedUrl = `https://drive.google.com/file/d/${driveId}/preview`;
+                      }
+                    }
+                  }
+
+                  const pdfPreviewUrl = isDrive ? "" : asset.fileUrl.replace(/\.pdf($|\?|#)/, ".jpg$1").replace("/upload/", "/upload/w_1200,q_auto,f_auto,pg_1/");
+                  
+                  return (
+                    <div className="w-full h-full flex flex-col items-center bg-zinc-900/50 rounded-lg overflow-hidden">
+                      <div className="flex-1 w-full relative flex items-center justify-center p-0 md:p-8">
+                        {isDrive ? (
+                          <iframe
+                            src={embedUrl}
+                            className="w-full h-full border-none shadow-2xl rounded-lg bg-white"
+                            allow="autoplay"
+                            title="Google Drive Preview"
+                          />
+                        ) : (
+                          <img
+                            src={pdfPreviewUrl}
+                            alt={asset.title}
+                            className="max-w-full max-h-full object-contain shadow-2xl rounded-lg border border-white/10"
+                          />
+                        )}
+                        {!isDrive && (
+                          <div className="absolute top-6 left-6 bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-xl border border-white/20 z-10 flex items-center gap-2">
+                            <FileText size={12} /> XEM TRƯỚC PDF (TRANG 1)
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="p-6 bg-zinc-900/80 backdrop-blur-xl w-full flex flex-col md:flex-row items-center justify-center gap-4 border-t border-white/5">
+                        <button
+                          onClick={() => window.open(asset.fileUrl, "_blank")}
+                          className="w-full md:w-auto px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-black shadow-xl shadow-red-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest active:scale-95"
+                        >
+                          <ExternalLink size={18} /> {isFolder ? "Mở Thư mục Drive" : isDrive ? "Mở Google Drive" : "Xem toàn bộ tài liệu (PDF)"}
+                        </button>
+                        
+                        <a
+                          href={asset.fileUrl}
+                          download
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full md:w-auto px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest active:scale-95 border border-white/10"
+                        >
+                          <Download size={18} /> Tải về máy
+                        </a>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <img
+                    src={asset.fileUrl}
+                    alt="Preview"
+                    className="max-w-full max-h-full object-contain shadow-2xl rounded-lg"
+                  />
+                );
+              })()}
 
               {/* Info Overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent text-white rounded-b-lg">
