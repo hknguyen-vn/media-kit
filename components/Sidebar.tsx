@@ -160,7 +160,7 @@ export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps)
       {projects.length > 0 && (
         <section className="space-y-3">
           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-4 sticky top-0 bg-[#fafafa] dark:bg-[#050505] z-10 pb-2">
-            Dự án tiêu biểu
+            Dự án
           </h3>
           <div className="space-y-1 max-h-[25vh] overflow-y-auto custom-scrollbar pr-2">
             {projects.map((proj) => (

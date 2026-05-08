@@ -344,7 +344,7 @@ function MediaKitContent() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-4 mb-2"
           >
-            <div className="relative w-32 h-12 md:w-40 md:h-16">
+            <div className="relative w-28 h-8 md:w-36 md:h-16">
               <img
                 src="/logo-hgpt.png"
                 alt="HGPT Logo"
@@ -353,7 +353,7 @@ function MediaKitContent() {
             </div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[10px] font-black tracking-widest uppercase border border-blue-100 dark:border-blue-800">
               <Sparkles size={12} />
-              Media Kit System
+              Media Kit (Beta)
             </div>
           </motion.div>
         </div>
@@ -425,7 +425,7 @@ function MediaKitContent() {
                     )} size={18} />
                     <input
                       type="text"
-                      placeholder="Tìm kiếm dự án, hashtag hoặc tên file..."
+                      placeholder="Tìm kiếm nhanh theo tên / hashtag..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       onFocus={() => setIsSearchFocused(true)}
@@ -713,7 +713,7 @@ function MediaKitContent() {
                 const isDrive = asset.fileUrl?.includes('drive.google.com');
                 const isFolder = asset.fileUrl?.includes('/folders/');
                 const isPDF = isDrive || asset.fileUrl?.toLowerCase().split('?')[0].split('#')[0].endsWith('.pdf');
-                
+
                 if (isPDF) {
                   // Handle Google Drive embedding if it's a Drive link
                   let embedUrl = asset.fileUrl;
@@ -729,7 +729,7 @@ function MediaKitContent() {
                       const urlObj = new URL(asset.fileUrl);
                       driveId = urlObj.searchParams.get('id') || "";
                     }
-                    
+
                     if (driveId) {
                       if (isFolder) {
                         embedUrl = `https://drive.google.com/embeddedfolderview?id=${driveId}#grid`;
@@ -740,7 +740,7 @@ function MediaKitContent() {
                   }
 
                   const pdfPreviewUrl = isDrive ? "" : asset.fileUrl.replace(/\.pdf($|\?|#)/, ".jpg$1").replace("/upload/", "/upload/w_1200,q_auto,f_auto,pg_1/");
-                  
+
                   return (
                     <div className="w-full h-full flex flex-col items-center bg-zinc-900/50 rounded-lg overflow-hidden">
                       <div className="flex-1 w-full relative flex items-center justify-center p-0 md:p-8">
@@ -764,7 +764,7 @@ function MediaKitContent() {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="p-6 bg-zinc-900/80 backdrop-blur-xl w-full flex flex-col md:flex-row items-center justify-center gap-4 border-t border-white/5">
                         <button
                           onClick={() => window.open(asset.fileUrl, "_blank")}
@@ -772,7 +772,7 @@ function MediaKitContent() {
                         >
                           <ExternalLink size={18} /> {isFolder ? "Mở Thư mục Drive" : isDrive ? "Mở Google Drive" : "Xem toàn bộ tài liệu (PDF)"}
                         </button>
-                        
+
                         <a
                           href={asset.fileUrl}
                           download
@@ -786,7 +786,7 @@ function MediaKitContent() {
                     </div>
                   );
                 }
-                
+
                 return (
                   <img
                     src={asset.fileUrl}
