@@ -141,7 +141,10 @@ function MediaKitContent() {
 
       let groupKey = '';
 
-      if (pTag !== 'p:none') {
+      if (cTag === 'c:document') {
+        // Mode 0: Documents are never grouped
+        groupKey = `single_${asset.id}`;
+      } else if (pTag !== 'p:none') {
         // Mode 1: Group by Project
         groupKey = `${cTag}:::${pTag}`;
       } else if (otherTags.length > 0) {
@@ -353,7 +356,7 @@ function MediaKitContent() {
             </div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[10px] font-black tracking-widest uppercase border border-blue-100 dark:border-blue-800">
               <Sparkles size={12} />
-              Media Kit (Beta)
+              Media Kit by Hien Nguyen (Beta)
             </div>
           </motion.div>
         </div>

@@ -16,14 +16,14 @@ interface AssetCardProps {
   onUploadFiles?: (files: FileList, tags: string) => Promise<void>;
 }
 
-export function AssetCard({ 
-  assets, 
-  onDelete, 
-  onTagClick, 
-  onUpdate, 
-  onPreview, 
+export function AssetCard({
+  assets,
+  onDelete,
+  onTagClick,
+  onUpdate,
+  onPreview,
   onDrillDown,
-  onUploadFiles 
+  onUploadFiles
 }: AssetCardProps) {
   const asset = assets[0]; // Main asset
   const isGroup = assets.length > 1;
@@ -84,11 +84,11 @@ export function AssetCard({
 
   const getThumb = (url?: string) => {
     if (!url) return "https://via.placeholder.com/600x400?text=No+Image";
-    
+
     if (url.includes('drive.google.com')) {
       const isFolder = url.includes('/folders/');
       let driveId = "";
-      
+
       if (url.includes('/file/d/')) {
         driveId = url.split('/file/d/')[1].split('/')[0];
       } else if (url.includes('/folders/')) {
@@ -101,11 +101,11 @@ export function AssetCard({
       if (isFolder) {
         return "https://cdn-icons-png.flaticon.com/512/2965/2965306.png"; // Nice Google Drive Folder Icon
       }
-      
+
       if (driveId) {
         return `https://drive.google.com/thumbnail?id=${driveId}&sz=w600`;
       }
-      
+
       return "https://www.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png";
     }
 
@@ -135,10 +135,10 @@ export function AssetCard({
       )}
     >
       {/* Hidden input for quick upload - Keep outside hover to avoid unmounting */}
-      <input 
-        type="file" 
-        multiple 
-        className="hidden" 
+      <input
+        type="file"
+        multiple
+        className="hidden"
         ref={fileInputRef}
         onChange={handleQuickUpload}
       />
@@ -173,15 +173,15 @@ export function AssetCard({
             {!isDrive && <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />}
             <div className={cn(
               "absolute top-3 left-3 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-lg border border-white/20 z-10",
-              isFolder ? "bg-blue-600 shadow-blue-500/20" : 
-              isDrive ? "bg-emerald-600 shadow-emerald-500/20" : "bg-red-600 shadow-red-500/20"
+              isFolder ? "bg-blue-600 shadow-blue-500/20" :
+                isDrive ? "bg-emerald-600 shadow-emerald-500/20" : "bg-red-600 shadow-red-500/20"
             )}>
               {isFolder ? "FOLDER" : isDrive ? "DRIVE" : "PDF"}
             </div>
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-               <div className="p-3 bg-white/20 backdrop-blur-md rounded-full border border-white/30 text-white shadow-2xl">
-                 <FileText size={24} />
-               </div>
+              <div className="p-3 bg-white/20 backdrop-blur-md rounded-full border border-white/30 text-white shadow-2xl">
+                <FileText size={24} />
+              </div>
             </div>
           </div>
         ) : (
@@ -206,7 +206,7 @@ export function AssetCard({
             className="absolute top-3 right-3 bg-gray/40 hover:bg-blue-600 backdrop-blur-md px-2.5 py-1.5 rounded-md z-10 shadow-lg border border-white/10 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
             title="Xem tất cả hình ảnh"
           >
-            <span className="text-[10px] font-bold text-white tracking-wide">{assets.length} pics</span>
+            <span className="text-[10px] font-bold text-white tracking-wide">{assets.length} more pics</span>
             <span className="text-[10px] font-bold text-blue-200 ml-1">➔</span>
           </button>
         )}
@@ -240,10 +240,10 @@ export function AssetCard({
               )}
 
               <button
-                onClick={(e) => { 
-                  e.stopPropagation(); 
+                onClick={(e) => {
+                  e.stopPropagation();
                   if (window.confirm("Bạn có chắc chắn muốn xóa tệp này? Thao tác này không thể hoàn tác.")) {
-                    onDelete(asset.id); 
+                    onDelete(asset.id);
                   }
                 }}
                 className="p-1.5 bg-black/40 backdrop-blur-md hover:bg-red-500 text-white/80 hover:text-white rounded-md transition-all border border-white/10"
@@ -325,9 +325,9 @@ export function AssetCard({
                 const isCategory = tag.startsWith("c:");
                 const isProject = tag.startsWith("p:");
                 const isHash = tag.startsWith("#");
-                
+
                 let tagStyles = "bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 border-zinc-100 dark:border-zinc-800";
-                
+
                 if (isCategory) {
                   const cat = tag.replace("c:", "").toLowerCase();
                   if (cat.includes("project") || cat.includes("dự án")) tagStyles = "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100/50 dark:border-blue-900/50 hover:bg-blue-100";
