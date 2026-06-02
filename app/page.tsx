@@ -354,10 +354,6 @@ function MediaKitContent() {
                 className="w-full h-full object-contain dark:brightness-110"
               />
             </div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[10px] font-black tracking-widest uppercase border border-blue-100 dark:border-blue-800">
-              <Sparkles size={12} />
-              Media Kit by Hien Nguyen (Beta)
-            </div>
           </motion.div>
         </div>
 
@@ -388,9 +384,48 @@ function MediaKitContent() {
           </div>
         </div>
 
-        {/* Floating/Corner Upload Zone */}
-        <div className="hidden md:block absolute top-10 right-6 z-50 w-full max-w-xs md:max-w-md pointer-events-none">
-          <div className="pointer-events-auto">
+        {/* Floating/Corner Upload Zone & DateTime Widget */}
+        <div className="absolute top-10 right-6 z-50 flex flex-col items-end gap-3 w-full max-w-xs md:max-w-md pointer-events-none">
+          {/* DateTime Widget Minimalist (Top Right - Single Line) */}
+          <div className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/30 dark:border-zinc-800/30 shadow-sm text-[10px] font-bold text-zinc-600 dark:text-zinc-400 select-none animate-in fade-in slide-in-from-top-2 duration-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="tabular-nums font-black text-zinc-800 dark:text-zinc-200">
+              {(() => {
+                const [time, setTime] = useState("");
+                useEffect(() => {
+                  const updateTime = () => {
+                    const now = new Date();
+                    setTime(now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+                  };
+                  updateTime();
+                  const timer = setInterval(updateTime, 1000);
+                  return () => clearInterval(timer);
+                }, []);
+                return time || "--:--:--";
+              })()}
+            </span>
+            <span className="text-zinc-300 dark:text-zinc-700">|</span>
+            <span>
+              {(() => {
+                const [date, setDate] = useState("");
+                useEffect(() => {
+                  const updateDate = () => {
+                    const now = new Date();
+                    const days = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+                    const dayName = days[now.getDay()];
+                    const dateStr = now.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+                    setDate(`${dayName}, ${dateStr}`);
+                  };
+                  updateDate();
+                  const timer = setInterval(updateDate, 60000);
+                  return () => clearInterval(timer);
+                }, []);
+                return date || "--, --/--/----";
+              })()}
+            </span>
+          </div>
+
+          <div className="hidden md:block pointer-events-auto w-full">
             <UploadZone
               onUpload={handleUpload}
               loading={loading}
@@ -421,11 +456,31 @@ function MediaKitContent() {
                 isSearchFocused ? "ring-2 ring-blue-500/20 shadow-blue-500/10" : "shadow-sm"
               )}>
                 <div className="flex items-center gap-4 p-2">
-                  <div className="relative flex-1">
-                    <Search className={cn(
-                      "absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300",
-                      isSearchFocused ? "text-blue-500" : "text-zinc-400"
-                    )} size={18} />
+                  <div className="relative flex-1 flex items-center">
+                    <AnimatePresence>
+                      {(search || activeFilters.length > 0) && (
+                        <motion.button
+                          initial={{ width: 0, opacity: 0, marginRight: 0 }}
+                          animate={{ width: "auto", opacity: 1, marginRight: "12px" }}
+                          exit={{ width: 0, opacity: 0, marginRight: 0 }}
+                          onClick={() => {
+                            setSearch("");
+                            setActiveFilters([]);
+                          }}
+                          className="flex items-center gap-1.5 pl-3 pr-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-2xl text-xs font-black transition-all shrink-0 active:scale-95 border border-zinc-200/20 shadow-sm"
+                          title="Quay lại trang chủ"
+                        >
+                          <ChevronLeft size={16} className="text-zinc-500" />
+                          <span>Home</span>
+                        </motion.button>
+                      )}
+                    </AnimatePresence>
+
+                    <div className="relative flex-1">
+                      <Search className={cn(
+                        "absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300",
+                        isSearchFocused ? "text-blue-500" : "text-zinc-400"
+                      )} size={18} />
                     <input
                       type="text"
                       placeholder="Tìm kiếm nhanh theo tên / hashtag..."
@@ -443,6 +498,7 @@ function MediaKitContent() {
                         <X size={14} />
                       </button>
                     )}
+                    </div>
                   </div>
 
                   <button
