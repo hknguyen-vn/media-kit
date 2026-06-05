@@ -339,138 +339,71 @@ function MediaKitContent() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 font-sans selection:bg-blue-100 selection:text-blue-700 pb-20">
-      {/* Header Area */}
-      <div className="relative pt-10 pb-6 px-6">
-        <div className="relative max-w-7xl mx-auto text-center space-y-2">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center gap-4 mb-2"
-          >
-            <div className="relative w-28 h-8 md:w-36 md:h-16">
+      {/* Header Area & Hero Section */}
+      <div className="relative pt-4 pb-4 lg:pt-8 lg:pb-12 px-4 lg:px-6 max-w-[1600px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-8 items-center border-b border-zinc-200/60 dark:border-zinc-800/60 pb-4 lg:pb-8">
+
+          {/* Logo & System Health (Left Side - Col Span 3) */}
+          <div className="lg:col-span-3 flex flex-row lg:flex-col items-center lg:items-start justify-between lg:justify-start gap-3 w-full">
+            <div className="relative w-20 h-6 md:w-36 md:h-12">
               <img
                 src="/logo-hgpt.png"
                 alt="HGPT Logo"
                 className="w-full h-full object-contain dark:brightness-110"
               />
             </div>
-          </motion.div>
-        </div>
 
-        {/* System Health Status (Top Left) - Hidden on Mobile */}
-        <div className="hidden md:flex absolute top-10 left-6 z-30 flex-col gap-2">
-          <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm border border-zinc-100 dark:border-zinc-800/50 group">
-            <div className="relative">
-              <Database size={13} className="text-zinc-400 group-hover:text-blue-500 transition-colors" />
-              <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            {/* Health indicators - Hidden on mobile */}
+            <div className="hidden lg:flex flex-wrap items-center justify-center lg:justify-start gap-2">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/80 dark:bg-zinc-900/80 border border-zinc-150 dark:border-zinc-850 shadow-sm">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+                <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-tighter">DB Online</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/80 dark:bg-zinc-900/80 border border-zinc-150 dark:border-zinc-855 shadow-sm">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+                <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-tighter">Cloudinary</span>
+              </div>
             </div>
-            <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-tighter">DB Online</span>
           </div>
 
-          <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm border border-zinc-100 dark:border-zinc-800/50 group">
-            <div className="relative">
-              <Cloud size={13} className="text-zinc-400 group-hover:text-sky-500 transition-colors" />
-              <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+          {/* Central Hero Search Section (Col Span 6) */}
+          <div className="lg:col-span-6 flex flex-col items-center justify-center w-full space-y-2 lg:space-y-4">
+            <div className="text-center space-y-1 hidden lg:block">
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                HGPT MEDIA KIT
+              </h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
+                Kho lưu trữ tài nguyên hình ảnh chọn lọc.
+              </p>
             </div>
-            <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-tighter">Cloudinary Ready</span>
-          </div>
 
-          <div className="flex items-center gap-2 px-2 py-1 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
-            <div className="relative flex items-center justify-center">
-              <CheckCircle2 size={13} className="text-emerald-500" />
-              <div className="absolute inset-0 bg-emerald-400 rounded-full animate-ping opacity-20" />
-            </div>
-            <span className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Healthy 100%</span>
-          </div>
-        </div>
-
-        {/* Floating/Corner Upload Zone & DateTime Widget */}
-        <div className="absolute top-10 right-6 z-50 flex flex-col items-end gap-3 w-full max-w-xs md:max-w-md pointer-events-none">
-          {/* DateTime Widget Minimalist (Top Right - Single Line) */}
-          <div className="pointer-events-auto hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/30 dark:border-zinc-800/30 shadow-sm text-[10px] font-bold text-zinc-600 dark:text-zinc-400 select-none animate-in fade-in slide-in-from-top-2 duration-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="tabular-nums font-black text-zinc-800 dark:text-zinc-200">
-              {(() => {
-                const [time, setTime] = useState("");
-                useEffect(() => {
-                  const updateTime = () => {
-                    const now = new Date();
-                    setTime(now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-                  };
-                  updateTime();
-                  const timer = setInterval(updateTime, 1000);
-                  return () => clearInterval(timer);
-                }, []);
-                return time || "--:--:--";
-              })()}
-            </span>
-            <span className="text-zinc-300 dark:text-zinc-700">|</span>
-            <span>
-              {(() => {
-                const [date, setDate] = useState("");
-                useEffect(() => {
-                  const updateDate = () => {
-                    const now = new Date();
-                    const days = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
-                    const dayName = days[now.getDay()];
-                    const dateStr = now.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-                    setDate(`${dayName}, ${dateStr}`);
-                  };
-                  updateDate();
-                  const timer = setInterval(updateDate, 60000);
-                  return () => clearInterval(timer);
-                }, []);
-                return date || "--, --/--/----";
-              })()}
-            </span>
-          </div>
-
-          <div className="hidden md:block pointer-events-auto w-full">
-            <UploadZone
-              onUpload={handleUpload}
-              loading={loading}
-              existingProjects={projectsList}
-              existingHashtags={hashtagsList}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-[1600px] mx-auto px-6">
-        <div className="flex gap-8">
-          {/* Sidebar */}
-          <Sidebar
-            assets={assets}
-            activeFilters={activeFilters}
-            onFilterChange={(f) => toggleFilter(f, 'single')}
-          />
-
-          {/* Main Content */}
-          <div className="flex-1 space-y-8">
-            {/* Space reserved for search and gallery */}
-
-            {/* Enhanced Sticky Header Area */}
-            <div className="sticky top-6 z-30 space-y-4 pb-4 -mx-4 px-4 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl rounded-b-3xl">
+            <div className="w-full relative">
               <div className={cn(
-                "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-xl transition-all duration-500",
-                isSearchFocused ? "ring-2 ring-blue-500/20 shadow-blue-500/10" : "shadow-sm"
+                "relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl transition-all duration-300 pointer-events-auto",
+                isSearchFocused ? "ring-4 ring-blue-500/10 shadow-blue-500/5 border-blue-500/60 dark:border-blue-500/40" : "hover:border-zinc-300 dark:hover:border-zinc-700 shadow-md"
               )}>
-                <div className="flex items-center gap-4 p-2">
+                <div className="flex items-center gap-3 p-2">
                   <div className="relative flex-1 flex items-center">
                     <AnimatePresence>
                       {(search || activeFilters.length > 0) && (
                         <motion.button
                           initial={{ width: 0, opacity: 0, marginRight: 0 }}
-                          animate={{ width: "auto", opacity: 1, marginRight: "12px" }}
+                          animate={{ width: "auto", opacity: 1, marginRight: "8px" }}
                           exit={{ width: 0, opacity: 0, marginRight: 0 }}
                           onClick={() => {
                             setSearch("");
                             setActiveFilters([]);
                           }}
-                          className="flex items-center gap-1.5 pl-3 pr-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-2xl text-xs font-black transition-all shrink-0 active:scale-95 border border-zinc-200/20 shadow-sm"
+                          className="flex items-center gap-1 pl-2.5 pr-3 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-black transition-all shrink-0 active:scale-95 border border-zinc-200/20 shadow-sm"
                           title="Quay lại trang chủ"
                         >
-                          <ChevronLeft size={16} className="text-zinc-500" />
+                          <ChevronLeft size={14} className="text-zinc-500" />
                           <span>Home</span>
                         </motion.button>
                       )}
@@ -478,62 +411,62 @@ function MediaKitContent() {
 
                     <div className="relative flex-1">
                       <Search className={cn(
-                        "absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300",
+                        "absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300",
                         isSearchFocused ? "text-blue-500" : "text-zinc-400"
-                      )} size={18} />
-                    <input
-                      type="text"
-                      placeholder="Tìm kiếm nhanh theo tên / hashtag..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      onFocus={() => setIsSearchFocused(true)}
-                      onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                      className="w-full pl-12 pr-10 py-4 bg-transparent border-none focus:ring-0 text-sm font-medium placeholder:text-zinc-400 outline-none"
-                    />
-                    {search && (
-                      <button
-                        onClick={() => setSearch("")}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
+                      )} size={16} />
+                      <input
+                        type="text"
+                        placeholder="Tìm kiếm nhanh dự án, công nghệ, hashtag..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        onFocus={() => setIsSearchFocused(true)}
+                        onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                        className="w-full pl-10 pr-8 py-3 bg-transparent border-none focus:ring-0 text-sm font-medium placeholder:text-zinc-400 outline-none"
+                      />
+                      {search && (
+                        <button
+                          onClick={() => setSearch("")}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
                     </div>
                   </div>
 
                   <button
                     onClick={handleShareCollection}
-                    className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20 whitespace-nowrap"
+                    className="flex items-center gap-1.5 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-500/20 whitespace-nowrap active:scale-95 shrink-0"
                   >
-                    <Share2 size={14} />
+                    <Share2 size={12} />
                     Chia sẻ
                   </button>
                 </div>
 
-                {/* Unfolding Suggestions (Pushes content down) */}
+                {/* Dropdown Suggestions */}
                 <AnimatePresence>
                   {isSearchFocused && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden border-t border-zinc-100 dark:border-zinc-800/50"
+                      className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden"
                     >
                       <div className="p-5 max-h-[400px] overflow-y-auto custom-scrollbar">
                         {search.length === 0 ? (
                           <div className="space-y-6">
                             {/* Popular Hashtags */}
                             <div>
-                              <div className="flex items-center gap-2 mb-4">
+                              <div className="flex items-center gap-2 mb-3">
                                 <TrendingUp size={14} className="text-purple-500" />
                                 <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Hashtag phổ biến</span>
                               </div>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-1.5">
                                 {hashtagsList.slice(0, 15).map((h) => (
                                   <button
                                     key={h}
                                     onClick={() => toggleFilter(h, 'multi')}
-                                    className="px-3 py-2 bg-white dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-xs font-bold transition-all border border-zinc-100 dark:border-zinc-800 shadow-sm"
+                                    className="px-2.5 py-1.5 bg-white dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-xs font-bold transition-all border border-zinc-100 dark:border-zinc-800 shadow-sm"
                                   >
                                     {h}
                                   </button>
@@ -543,7 +476,7 @@ function MediaKitContent() {
 
                             {/* Categories Shortcuts */}
                             <div>
-                              <div className="flex items-center gap-2 mb-4">
+                              <div className="flex items-center gap-2 mb-3">
                                 <LayoutGrid size={14} className="text-blue-500" />
                                 <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Chuyên mục nổi bật</span>
                               </div>
@@ -602,33 +535,116 @@ function MediaKitContent() {
                   )}
                 </AnimatePresence>
               </div>
-
-              {/* Active Filters Tokens */}
-              {activeFilters.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 px-2 animate-in fade-in slide-in-from-top-2 duration-500">
-                  <div className="flex items-center gap-1.5 px-2 py-1 text-zinc-400">
-                    <Filter size={12} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Đang lọc:</span>
-                  </div>
-                  {activeFilters.map(f => (
-                    <button
-                      key={f}
-                      onClick={() => toggleFilter(f)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-xl text-[10px] font-black text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all group shadow-sm"
-                    >
-                      {f.replace("c:", "").replace("p:", "").replace("tags:", "").toUpperCase()}
-                      <X size={10} className="text-blue-400 group-hover:text-red-500 transition-colors" />
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => toggleFilter("")}
-                    className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 hover:text-red-500 transition-all ml-auto"
-                  >
-                    Xóa tất cả
-                  </button>
-                </div>
-              )}
             </div>
+
+            {/* Top Keywords section right under Hero search bar - Hidden on Mobile */}
+            <div className="hidden md:flex flex-wrap items-center justify-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+              <span className="font-bold text-zinc-400 dark:text-zinc-500">Từ khóa hot:</span>
+              {hashtagsList.slice(0, 8).map((h) => (
+                <button
+                  key={h}
+                  onClick={() => toggleFilter(h, 'multi')}
+                  className={cn(
+                    "px-2.5 py-0.5 rounded-full bg-zinc-200/50 dark:bg-zinc-800/40 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-semibold border border-transparent hover:border-blue-100/50 dark:hover:border-blue-900/50 shadow-sm",
+                    activeFilters.includes(h) && "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/50 font-black shadow-sm"
+                  )}
+                >
+                  {h}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Side DateTime Widget & Upload Zone (Col Span 3) - Hidden on Mobile */}
+          <div className="hidden md:flex lg:col-span-3 flex-col items-center lg:items-end gap-3 pointer-events-auto w-full">
+            {/* DateTime Widget */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200/30 dark:border-zinc-800/30 shadow-sm text-[10px] font-bold text-zinc-600 dark:text-zinc-400 select-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="tabular-nums font-black text-zinc-800 dark:text-zinc-200">
+                {(() => {
+                  const [time, setTime] = useState("");
+                  useEffect(() => {
+                    const updateTime = () => {
+                      const now = new Date();
+                      setTime(now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+                    };
+                    updateTime();
+                    const timer = setInterval(updateTime, 1000);
+                    return () => clearInterval(timer);
+                  }, []);
+                  return time || "--:--:--";
+                })()}
+              </span>
+              <span className="text-zinc-300 dark:text-zinc-700">|</span>
+              <span>
+                {(() => {
+                  const [date, setDate] = useState("");
+                  useEffect(() => {
+                    const updateDate = () => {
+                      const now = new Date();
+                      const days = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+                      const dayName = days[now.getDay()];
+                      const dateStr = now.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+                      setDate(`${dayName}, ${dateStr}`);
+                    };
+                    updateDate();
+                    const timer = setInterval(updateDate, 60000);
+                    return () => clearInterval(timer);
+                  }, []);
+                  return date || "--, --/--/----";
+                })()}
+              </span>
+            </div>
+
+            {/* Upload Zone */}
+            <div className="w-full">
+              <UploadZone
+                onUpload={handleUpload}
+                loading={loading}
+                existingProjects={projectsList}
+                existingHashtags={hashtagsList}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[1600px] mx-auto px-6">
+        <div className="flex gap-8">
+          {/* Sidebar */}
+          <Sidebar
+            assets={assets}
+            activeFilters={activeFilters}
+            onFilterChange={(f) => toggleFilter(f, 'single')}
+          />
+
+          {/* Main Content */}
+          <div className="flex-1 space-y-6">
+            {/* Active Filters Tokens (Placed here inside Main Content block) */}
+            {activeFilters.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 px-2 animate-in fade-in slide-in-from-top-2 duration-500">
+                <div className="flex items-center gap-1.5 px-2 py-1 text-zinc-400">
+                  <Filter size={12} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Đang lọc:</span>
+                </div>
+                {activeFilters.map(f => (
+                  <button
+                    key={f}
+                    onClick={() => toggleFilter(f)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 rounded-xl text-[10px] font-black text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all group shadow-sm"
+                  >
+                    {f.replace("c:", "").replace("p:", "").replace("tags:", "").toUpperCase()}
+                    <X size={10} className="text-blue-400 group-hover:text-red-500 transition-colors" />
+                  </button>
+                ))}
+                <button
+                  onClick={() => toggleFilter("")}
+                  className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 hover:text-red-500 transition-all ml-auto"
+                >
+                  Xóa tất cả
+                </button>
+              </div>
+            )}
 
             {/* Gallery Grid */}
             <AnimatePresence mode="popLayout">
