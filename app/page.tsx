@@ -387,7 +387,7 @@ function MediaKitContent() {
         {/* Floating/Corner Upload Zone & DateTime Widget */}
         <div className="absolute top-10 right-6 z-50 flex flex-col items-end gap-3 w-full max-w-xs md:max-w-md pointer-events-none">
           {/* DateTime Widget Minimalist (Top Right - Single Line) */}
-          <div className="pointer-events-auto flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/30 dark:border-zinc-800/30 shadow-sm text-[10px] font-bold text-zinc-600 dark:text-zinc-400 select-none animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="pointer-events-auto hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md border border-zinc-200/30 dark:border-zinc-800/30 shadow-sm text-[10px] font-bold text-zinc-600 dark:text-zinc-400 select-none animate-in fade-in slide-in-from-top-2 duration-300">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="tabular-nums font-black text-zinc-800 dark:text-zinc-200">
               {(() => {
