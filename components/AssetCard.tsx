@@ -203,11 +203,11 @@ export function AssetCard({
         {isGroup && (
           <button
             onClick={(e) => { e.stopPropagation(); onDrillDown?.(); }}
-            className="absolute top-3 right-3 bg-gray/40 hover:bg-blue-600 backdrop-blur-md px-2.5 py-1.5 rounded-md z-10 shadow-lg border border-white/10 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
+            className="absolute top-3 right-3 bg-zinc-950/80 hover:bg-blue-600 backdrop-blur-md px-3 py-1.5 rounded-xl z-10 shadow-xl border border-white/20 transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
             title="Xem tất cả hình ảnh"
           >
-            <span className="text-[10px] font-bold text-white tracking-wide">{assets.length} more pics</span>
-            <span className="text-[10px] font-bold text-blue-200 ml-1">➔</span>
+            <span className="text-[10px] font-black text-white tracking-wide uppercase">Xem thêm (+{assets.length})</span>
+            <span className="text-[10px] font-bold text-blue-300 ml-0.5">➔</span>
           </button>
         )}
 
