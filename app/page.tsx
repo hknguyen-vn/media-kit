@@ -373,12 +373,13 @@ function MediaKitContent() {
           </div>
 
           {/* Central Hero Search Section (Col Span 6) */}
-          <div className="lg:col-span-6 flex flex-col items-center justify-center w-full space-y-2 lg:space-y-4">
+          <div className="lg:col-span-6 flex flex-col items-center justify-center w-full space-y-2 lg:space-y-3">
             <div className="text-center space-y-1 hidden lg:block">
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                HGPT MEDIA KIT
+              <h1 className="text-2xl md:text-3xl font-syne font-extrabold tracking-normal bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 dark:from-blue-400 dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent select-none drop-shadow-sm flex items-center justify-center gap-2">
+                <span>HGPT MEDIA KIT</span>
+                <Sparkles size={20} className="text-indigo-500 dark:text-indigo-400 animate-pulse shrink-0" />
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold max-w-sm mx-auto uppercase tracking-widest">
                 Kho lưu trữ tài nguyên hình ảnh chọn lọc.
               </p>
             </div>

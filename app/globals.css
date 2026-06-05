@@ -10,6 +10,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-inter);
+  --font-syne: var(--font-syne);
 }
 
 @media (prefers-color-scheme: dark) {
