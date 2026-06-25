@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Trash2, Download, ExternalLink, Hash, Check, FileText, Plus, Loader2, Layers } from "lucide-react";
+import { Copy, Trash2, Download, ExternalLink, Hash, Check, FileText, Plus, Loader2, Layers, Play } from "lucide-react";
 import { toast } from "sonner";
 import { cn, copyToClipboard } from "@/lib/utils";
 
@@ -36,6 +36,7 @@ export function AssetCard({
   const [editTitle, setEditTitle] = useState(asset.title);
   const [editTags, setEditTags] = useState(asset.tags || "");
   const [isSaving, setIsSaving] = useState(false);
+  const [thumbError, setThumbError] = useState(false);
 
   const handleQuickUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -118,8 +119,10 @@ export function AssetCard({
 
   const isDrive = asset.fileUrl?.includes('drive.google.com');
   const isFolder = asset.fileUrl?.includes('/folders/');
-  const isImage = !isDrive && asset.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp|svg)/i) != null;
-  const isPDF = isDrive || asset.fileUrl?.toLowerCase().split('?')[0].split('#')[0].endsWith('.pdf');
+  const isVideo = (asset.tags?.includes('c:video') || asset.tags?.includes('c:clip')) || asset.fileUrl?.match(/\.(mp4|mov|avi|wmv|flv|webm)/i) != null;
+  const isImage = !isDrive && !isVideo && asset.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp|svg)/i) != null;
+  const isPDF = !isDrive && asset.fileUrl?.toLowerCase().split('?')[0].split('#')[0].endsWith('.pdf');
+  const isDocument = isDrive || isPDF || isFolder || isVideo;
 
   return (
     <motion.div
@@ -154,33 +157,61 @@ export function AssetCard({
             alt={asset.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
-        ) : isPDF ? (
+        ) : isDocument ? (
           <div className={cn(
             "w-full h-full relative flex items-center justify-center group/pdf",
-            isDrive ? "bg-zinc-50 dark:bg-zinc-800/50" : "bg-white dark:bg-zinc-900"
+            isVideo
+              ? "bg-gradient-to-br from-zinc-900 to-purple-950/80"
+              : isDrive
+              ? "bg-zinc-50 dark:bg-zinc-800/50"
+              : "bg-white dark:bg-zinc-900"
           )}>
-            <img
-              src={getThumb(asset.fileUrl)}
-              alt={asset.title}
-              className={cn(
-                "transition-transform duration-700 group-hover:scale-110",
-                isFolder
-                  ? "w-16 h-16 object-contain"
-                  : "w-full h-full object-cover opacity-90 group-hover:opacity-100"
-              )}
-            />
+            {/* Thumbnail */}
+            {isVideo ? (
+              // For videos: try Drive thumbnail, fallback to Play icon placeholder
+              !thumbError ? (
+                <img
+                  src={getThumb(asset.fileUrl)}
+                  alt={asset.title}
+                  onError={() => setThumbError(true)}
+                  className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-all duration-700 group-hover:scale-110"
+                />
+              ) : (
+                // Stylized video placeholder
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-purple-600/20 border border-purple-500/30 flex items-center justify-center">
+                    <Play size={32} className="text-purple-300 ml-1" />
+                  </div>
+                  <p className="text-white/40 text-[9px] font-bold uppercase tracking-widest">Video Drive</p>
+                </div>
+              )
+            ) : (
+              <img
+                src={getThumb(asset.fileUrl)}
+                alt={asset.title}
+                className={cn(
+                  "transition-transform duration-700 group-hover:scale-110",
+                  isFolder
+                    ? "w-16 h-16 object-contain"
+                    : "w-full h-full object-cover opacity-90 group-hover:opacity-100"
+                )}
+              />
+            )}
             {/* Visual indicator that it's a PDF */}
-            {!isDrive && <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />}
+            {!isDrive && !isVideo && <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />}
+            {/* For videos: always show dark overlay for contrast */}
+            {isVideo && <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />}
             <div className={cn(
               "absolute top-3 left-3 text-white text-[10px] font-black px-2 py-0.5 rounded shadow-lg border border-white/20 z-10",
               isFolder ? "bg-blue-600 shadow-blue-500/20" :
-                isDrive ? "bg-emerald-600 shadow-emerald-500/20" : "bg-red-600 shadow-red-500/20"
+                isVideo ? "bg-purple-600 shadow-purple-500/20" :
+                  isDrive ? "bg-emerald-600 shadow-emerald-500/20" : "bg-red-600 shadow-red-500/20"
             )}>
-              {isFolder ? "FOLDER" : isDrive ? "DRIVE" : "PDF"}
+              {isFolder ? "FOLDER" : isVideo ? "VIDEO" : isDrive ? "DRIVE" : "PDF"}
             </div>
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <div className="p-3 bg-white/20 backdrop-blur-md rounded-full border border-white/30 text-white shadow-2xl">
-                <FileText size={24} />
+                {isVideo ? <Play size={24} className="ml-1" /> : <FileText size={24} />}
               </div>
             </div>
           </div>
@@ -270,10 +301,34 @@ export function AssetCard({
               className="relative aspect-[4/3] bg-zinc-100 dark:bg-zinc-800 overflow-hidden cursor-zoom-in"
               onClick={(e) => { e.stopPropagation(); onPreview(subAsset.id); }}
             >
-              {subAsset.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) ? (
-                <img src={getThumb(subAsset.fileUrl)} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+              {(subAsset.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) || subAsset.fileUrl?.includes('drive.google.com')) ? (
+                <>
+                  <img 
+                    src={getThumb(subAsset.fileUrl)} 
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" 
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      if (e.currentTarget.nextElementSibling) {
+                        e.currentTarget.nextElementSibling.classList.remove('hidden');
+                      }
+                    }}
+                  />
+                  <div className="hidden w-full h-full flex-col items-center justify-center bg-zinc-200 dark:bg-zinc-800">
+                    {(subAsset.tags?.includes('c:video') || subAsset.tags?.includes('c:clip') || subAsset.fileUrl?.match(/\.(mp4|mov|avi|wmv|flv|webm)/i)) ? (
+                      <Play size={20} className="text-purple-400" />
+                    ) : (
+                      <FileText size={20} className="text-zinc-400" />
+                    )}
+                  </div>
+                </>
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-zinc-200 dark:bg-zinc-800"><FileText size={20} className="text-zinc-400" /></div>
+                <div className="w-full h-full flex items-center justify-center bg-zinc-200 dark:bg-zinc-800">
+                  {(subAsset.tags?.includes('c:video') || subAsset.tags?.includes('c:clip') || subAsset.fileUrl?.match(/\.(mp4|mov|avi|wmv|flv|webm)/i)) ? (
+                    <Play size={20} className="text-purple-500" />
+                  ) : (
+                    <FileText size={20} className="text-zinc-400" />
+                  )}
+                </div>
               )}
             </div>
           ))}
@@ -335,6 +390,7 @@ export function AssetCard({
                   else if (cat.includes("machine") || cat.includes("công nghệ")) tagStyles = "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-100/50 dark:border-amber-900/50 hover:bg-amber-100";
                   else if (cat.includes("process") || cat.includes("quy trình")) tagStyles = "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 border-cyan-100/50 dark:border-cyan-900/50 hover:bg-cyan-100";
                   else if (cat.includes("profile") || cat.includes("hồ sơ") || cat.includes("document")) tagStyles = "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100/50 dark:border-red-900/50 hover:bg-red-100";
+                  else if (cat.includes("video") || cat.includes("clip")) tagStyles = "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-100/50 dark:border-purple-900/50 hover:bg-purple-100";
                   else tagStyles = "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200";
                 } else if (isProject) {
                   tagStyles = "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-100/50 dark:border-indigo-900/50 hover:bg-indigo-100";

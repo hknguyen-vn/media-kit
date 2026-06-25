@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, X, Hash, Image as ImageIcon, Loader2, Briefcase, Factory, Cpu, Plus, FileText, LayoutList, ChevronDown, Check } from "lucide-react";
+import { Upload, X, Hash, Image as ImageIcon, Loader2, Briefcase, Factory, Cpu, Plus, FileText, LayoutList, ChevronDown, Check, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,7 @@ const CATEGORIES = [
   { id: "machine", label: "MMTB - Công nghệ", icon: Cpu },
   { id: "process", label: "Quy trình", icon: LayoutList },
   { id: "document", label: "Docs / Tải về", icon: FileText },
+  { id: "video", label: "Clip Ngắn 🎬", icon: PlayCircle },
   { id: "other", label: "Khác", icon: ImageIcon },
 ];
 
@@ -133,6 +134,7 @@ export function UploadZone({ onUpload, loading, existingProjects, existingHashta
     const tagsString = [
       `c:${category}`,
       projectName ? `p:${projectName.trim()}` : "",
+      tagInput.trim() ? tagInput.trim() : "",
       ...tags
     ].filter(Boolean).join(", ");
 
@@ -154,6 +156,7 @@ export function UploadZone({ onUpload, loading, existingProjects, existingHashta
     const finalTags = [
       `c:${category}`,
       projectName ? `p:${projectName.trim()}` : "",
+      tagInput.trim() ? tagInput.trim() : "",
       ...tags
     ].filter(Boolean).join(", ");
 
@@ -221,7 +224,7 @@ export function UploadZone({ onUpload, loading, existingProjects, existingHashta
                       key={cat.id}
                       onClick={() => {
                         setCategory(cat.id);
-                        if (cat.id === "document") {
+                        if (cat.id === "document" || cat.id === "video") {
                           setUploadMode("link");
                         } else {
                           setUploadMode("file");
@@ -302,7 +305,9 @@ export function UploadZone({ onUpload, loading, existingProjects, existingHashta
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Link Google Drive</label>
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">
+                      {category === "video" ? "Link Google Drive (Video)" : "Link Google Drive"}
+                    </label>
                     <input
                       type="text"
                       value={externalUrl}
@@ -310,6 +315,11 @@ export function UploadZone({ onUpload, loading, existingProjects, existingHashta
                       placeholder="https://drive.google.com/file/d/..."
                       className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:border-blue-500"
                     />
+                    {category === "video" && (
+                      <p className="text-[10px] text-purple-500 font-medium">
+                        🎬 Chia sẻ link Google Drive có chế độ "Anyone with link" — hệ thống sẽ tự xử lý xem trước và tải nhanh!
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -400,7 +410,7 @@ export function UploadZone({ onUpload, loading, existingProjects, existingHashta
                   <>
                     {uploadMode === "file" ? <Upload size={18} /> : <Plus size={18} />}
                     <span className="uppercase tracking-widest">
-                      {uploadMode === "file" ? `Upload ${selectedFiles.length} file` : "Thêm tài liệu Drive"}
+                      {uploadMode === "file" ? `Upload ${selectedFiles.length} file` : category === "video" ? "Thêm Clip Drive" : "Thêm tài liệu Drive"}
                     </span>
                   </>
                 )}

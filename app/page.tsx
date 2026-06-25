@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, Suspense, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database, ChevronLeft, ChevronRight, Expand, Copy, Download, ExternalLink, FileText } from "lucide-react";
+import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database, ChevronLeft, ChevronRight, Expand, Copy, Download, ExternalLink, FileText, Play } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { uploadToCloudinary } from "@/lib/cloudinary";
@@ -28,7 +28,17 @@ function MediaKitContent() {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Sync state with URL
+  // Sync URL to state when searchParams change (e.g. Back button)
+  useEffect(() => {
+    const s = searchParams.get("s") || "";
+    const f = searchParams.get("f") ? searchParams.get("f")!.split(",") : [];
+
+    // Only update if they actually changed to avoid unnecessary re-renders
+    if (s !== search) setSearch(s);
+    if (JSON.stringify(f) !== JSON.stringify(activeFilters)) setActiveFilters(f);
+  }, [searchParams]);
+
+  // Sync state to URL
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set("s", search);
@@ -398,7 +408,7 @@ function MediaKitContent() {
           {/* Central Hero Search Section (Col Span 6) */}
           <div className="lg:col-span-6 flex flex-col items-center justify-center w-full space-y-2 lg:space-y-3">
             <div className="text-center space-y-1 hidden lg:block">
-              <h1 className="text-2xl md:text-3xl font-syne font-extrabold tracking-normal bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 dark:from-blue-400 dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent select-none drop-shadow-sm flex items-center justify-center gap-2">
+              <h1 className="text-2xl md:text-3xl font-inter font-extrabold tracking-normal bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 dark:from-blue-400 dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent select-none drop-shadow-sm flex items-center justify-center gap-2">
                 <span>HGPT MEDIA KIT</span>
                 <Sparkles size={20} className="text-indigo-500 dark:text-indigo-400 animate-pulse shrink-0" />
               </h1>
@@ -809,15 +819,16 @@ function MediaKitContent() {
                 const asset = filteredAssets[previewIndex];
                 const isDrive = asset.fileUrl?.includes('drive.google.com');
                 const isFolder = asset.fileUrl?.includes('/folders/');
-                const isPDF = isDrive || asset.fileUrl?.toLowerCase().split('?')[0].split('#')[0].endsWith('.pdf');
+                const isVideo = (asset.tags?.includes('c:video') || asset.tags?.includes('c:clip')) || asset.fileUrl?.match(/\\.(mp4|mov|avi|wmv|flv|webm)/i) != null;
+                const isPDF = !isDrive && asset.fileUrl?.toLowerCase().split('?')[0].split('#')[0].endsWith('.pdf');
+                const isDocument = isDrive || isPDF || isFolder || isVideo;
 
-                if (isPDF) {
+                if (isDocument) {
                   // Handle Google Drive embedding if it's a Drive link
                   let embedUrl = asset.fileUrl;
+                  let driveId = "";
                   if (isDrive) {
                     // Convert various sharing link formats to preview link
-                    let driveId = "";
-
                     if (asset.fileUrl.includes('/file/d/')) {
                       driveId = asset.fileUrl.split('/file/d/')[1].split('/')[0];
                     } else if (asset.fileUrl.includes('/folders/')) {
@@ -836,17 +847,48 @@ function MediaKitContent() {
                     }
                   }
 
-                  const pdfPreviewUrl = isDrive ? "" : asset.fileUrl.replace(/\.pdf($|\?|#)/, ".jpg$1").replace("/upload/", "/upload/w_1200,q_auto,f_auto,pg_1/");
+                  const pdfPreviewUrl = isDrive || isVideo ? "" : asset.fileUrl.replace(/\.pdf($|\?|#)/, ".jpg$1").replace("/upload/", "/upload/w_1200,q_auto,f_auto,pg_1/");
+                  const downloadUrl = (isDrive && driveId && !isFolder)
+                    ? `https://drive.google.com/uc?export=download&id=${driveId}`
+                    : asset.fileUrl;
+
 
                   return (
                     <div className="w-full h-full flex flex-col items-center bg-zinc-900/50 rounded-lg overflow-hidden">
-                      <div className="flex-1 w-full relative flex items-center justify-center p-0 md:p-8">
-                        {isDrive ? (
+                      <div className="flex-1 w-full relative flex items-center justify-center p-0 md:p-6">
+                        {isDrive && isVideo ? (
+                          // Drive Video Player
+                          <div className="w-full h-full flex flex-col rounded-xl overflow-hidden shadow-2xl border border-white/10">
+                            <div className="flex items-center gap-3 px-4 py-2.5 bg-zinc-800/80 backdrop-blur border-b border-white/5">
+                              <div className="flex gap-1.5">
+                                <div className="w-3 h-3 rounded-full bg-red-500/70" />
+                                <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
+                                <div className="w-3 h-3 rounded-full bg-green-500/70" />
+                              </div>
+                              <span className="text-white/40 text-[10px] font-mono truncate flex-1">Google Drive Video Player</span>
+                              <Play size={12} className="text-purple-400" />
+                            </div>
+                            <iframe
+                              src={embedUrl}
+                              className="flex-1 w-full border-none bg-black"
+                              allow="autoplay; fullscreen"
+                              allowFullScreen
+                              title={asset.title || "Video"}
+                            />
+                          </div>
+                        ) : isDrive ? (
                           <iframe
                             src={embedUrl}
                             className="w-full h-full border-none shadow-2xl rounded-lg bg-white"
                             allow="autoplay"
                             title="Google Drive Preview"
+                          />
+                        ) : isVideo ? (
+                          <video
+                            src={asset.fileUrl}
+                            controls
+                            autoPlay
+                            className="max-w-full max-h-full object-contain shadow-2xl rounded-lg border border-white/10"
                           />
                         ) : (
                           <img
@@ -855,29 +897,34 @@ function MediaKitContent() {
                             className="max-w-full max-h-full object-contain shadow-2xl rounded-lg border border-white/10"
                           />
                         )}
-                        {!isDrive && (
+                        {!isDrive && !isVideo && (
                           <div className="absolute top-6 left-6 bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-xl border border-white/20 z-10 flex items-center gap-2">
                             <FileText size={12} /> XEM TRƯỚC PDF (TRANG 1)
                           </div>
                         )}
                       </div>
 
-                      <div className="p-6 bg-zinc-900/80 backdrop-blur-xl w-full flex flex-col md:flex-row items-center justify-center gap-4 border-t border-white/5">
-                        <button
-                          onClick={() => window.open(asset.fileUrl, "_blank")}
-                          className="w-full md:w-auto px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-black shadow-xl shadow-red-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest active:scale-95"
-                        >
-                          <ExternalLink size={18} /> {isFolder ? "Mở Thư mục Drive" : isDrive ? "Mở Google Drive" : "Xem toàn bộ tài liệu (PDF)"}
-                        </button>
-
+                      <div className="relative z-20 p-4 md:p-6 bg-zinc-900/80 backdrop-blur-xl w-full flex items-center justify-center border-t border-white/5">
                         <a
-                          href={asset.fileUrl}
-                          download
+                          href={isFolder ? asset.fileUrl : downloadUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full md:w-auto px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest active:scale-95 border border-white/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            window.open(isFolder ? asset.fileUrl : downloadUrl, "_blank");
+                          }}
+                          className={cn(
+                            "w-full md:w-auto px-10 py-3.5 text-white rounded-xl text-sm font-black shadow-2xl transition-all flex items-center justify-center gap-3 uppercase tracking-widest active:scale-95",
+                            isFolder
+                              ? "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20"
+                              : isVideo
+                                ? "bg-purple-600 hover:bg-purple-700 shadow-purple-600/20"
+                                : "bg-red-600 hover:bg-red-700 shadow-red-600/20"
+                          )}
                         >
-                          <Download size={18} /> Tải về máy
+                          {isFolder ? <ExternalLink size={20} /> : <Download size={20} />}
+                          {isFolder ? "Mở thư mục Drive" : "Tải về máy"}
                         </a>
                       </div>
                     </div>

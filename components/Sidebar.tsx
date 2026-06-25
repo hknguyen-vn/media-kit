@@ -34,6 +34,7 @@ const CATEGORIES = [
   { id: "c:process", label: "Quy trình", icon: LayoutList },
   { id: "c:machine", label: "MMTB - Công nghệ", icon: Cpu },
   { id: "c:document", label: "Docs / Tải về", icon: FileText },
+  { id: "c:video", label: "Clip Ngắn (Beta)", icon: PlayCircle },
 ];
 
 export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps) {

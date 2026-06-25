@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
   variable: "--font-inter",
+  weight: ["600", "700"],
 });
 
 const syne = Syne({
