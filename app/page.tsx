@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, Suspense } from "react";
+import { useEffect, useState, useMemo, Suspense, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database, ChevronLeft, ChevronRight, Expand, Copy, Download, ExternalLink, FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ function MediaKitContent() {
   const [visibleCount, setVisibleCount] = useState(12);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   // Sync state with URL
   useEffect(() => {
@@ -172,6 +173,28 @@ function MediaKitContent() {
       displayGroups: result
     };
   }, [assets, activeFilters, search]);
+
+  // Auto load more on scroll
+  useEffect(() => {
+    const target = observerTarget.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && visibleCount < displayGroups.length) {
+          setVisibleCount((prev) => prev + 12);
+        }
+      },
+      {
+        rootMargin: "200px",
+      }
+    );
+
+    observer.observe(target);
+    return () => {
+      observer.unobserve(target);
+    };
+  }, [displayGroups.length, visibleCount]);
 
   const toggleFilter = (f: string, mode: 'single' | 'multi' = 'multi') => {
     if (!f) {
@@ -417,7 +440,7 @@ function MediaKitContent() {
                       )} size={16} />
                       <input
                         type="text"
-                        placeholder="Tìm kiếm nhanh dự án, công nghệ, hashtag..."
+                        placeholder="Tìm bằng keyword - không dấu..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         onFocus={() => setIsSearchFocused(true)}
@@ -466,7 +489,7 @@ function MediaKitContent() {
                                 {hashtagsList.slice(0, 15).map((h) => (
                                   <button
                                     key={h}
-                                    onClick={() => toggleFilter(h, 'multi')}
+                                    onClick={() => toggleFilter(h, 'single')}
                                     className="px-2.5 py-1.5 bg-white dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 hover:border-blue-200 dark:hover:border-blue-800 rounded-xl text-xs font-bold transition-all border border-zinc-100 dark:border-zinc-800 shadow-sm"
                                   >
                                     {h}
@@ -491,7 +514,7 @@ function MediaKitContent() {
                                 ].map((cat) => (
                                   <button
                                     key={cat.id}
-                                    onClick={() => toggleFilter(cat.id, 'multi')}
+                                    onClick={() => toggleFilter(cat.id, 'single')}
                                     className="flex items-center gap-2 p-2 bg-zinc-50 dark:bg-zinc-800/30 hover:bg-white dark:hover:bg-zinc-800 rounded-xl text-left transition-all border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 group shadow-sm hover:shadow-md"
                                   >
                                     <div className="w-7 h-7 rounded-lg bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
@@ -516,7 +539,7 @@ function MediaKitContent() {
                                   <button
                                     key={h}
                                     onClick={() => {
-                                      toggleFilter(h, 'multi');
+                                      toggleFilter(h, 'single');
                                       setSearch("");
                                     }}
                                     className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50/50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-xl text-xs font-black transition-all border border-blue-100/50 dark:border-blue-900/50"
@@ -544,7 +567,7 @@ function MediaKitContent() {
               {hashtagsList.slice(0, 8).map((h) => (
                 <button
                   key={h}
-                  onClick={() => toggleFilter(h, 'multi')}
+                  onClick={() => toggleFilter(h, 'single')}
                   className={cn(
                     "px-2.5 py-0.5 rounded-full bg-zinc-200/50 dark:bg-zinc-800/40 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-semibold border border-transparent hover:border-blue-100/50 dark:hover:border-blue-900/50 shadow-sm",
                     activeFilters.includes(h) && "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/50 font-black shadow-sm"
@@ -673,7 +696,7 @@ function MediaKitContent() {
                         <AssetCard
                           assets={group}
                           onDelete={handleDelete}
-                          onTagClick={(tag) => toggleFilter(tag, 'multi')}
+                          onTagClick={(tag) => toggleFilter(tag, 'single')}
                           onUpdate={handleUpdate}
                           onUploadFiles={handleQuickUpload}
                           onPreview={(assetId: number) => {
@@ -730,15 +753,13 @@ function MediaKitContent() {
               )}
             </AnimatePresence>
 
-            {/* Load More Button */}
+            {/* Infinite Scroll Sentinel */}
             {visibleCount < displayGroups.length && (
-              <div className="flex justify-center mt-12 pb-12">
-                <button
-                  onClick={() => setVisibleCount((prev) => prev + 12)}
-                  className="px-6 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:text-blue-600 hover:border-blue-200 dark:hover:border-blue-800 shadow-sm transition-all"
-                >
-                  Tải thêm ({displayGroups.length - visibleCount} nhóm/ảnh)
-                </button>
+              <div ref={observerTarget} className="flex justify-center items-center py-12 mt-4">
+                <Loader2 className="animate-spin text-blue-600 dark:text-blue-400 mr-2" size={20} />
+                <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                  Đang tải thêm ({displayGroups.length - visibleCount} nhóm/ảnh)...
+                </span>
               </div>
             )}
           </div>
