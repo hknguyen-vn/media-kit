@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, Suspense, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database, ChevronLeft, ChevronRight, Expand, Copy, Download, ExternalLink, FileText, Play } from "lucide-react";
+import { Search, Image as ImageIcon, Loader2, Sparkles, Filter, Share2, X, Hash, Zap, TrendingUp, LayoutGrid, CheckCircle2, Server, Cloud, Database, ChevronLeft, ChevronRight, Expand, Copy, Download, ExternalLink, FileText, Play, Home, Plus, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { uploadToCloudinary } from "@/lib/cloudinary";
@@ -11,6 +11,7 @@ import { UploadZone } from "@/components/UploadZone";
 import { Sidebar } from "@/components/Sidebar";
 import { SocialSidebar } from "@/components/SocialSidebar";
 import { copyToClipboard, cn } from "@/lib/utils";
+import { getTagPalette } from "@/lib/tagPalette";
 
 function MediaKitContent() {
   const router = useRouter();
@@ -26,6 +27,9 @@ function MediaKitContent() {
   const [visibleCount, setVisibleCount] = useState(12);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileMenuTab, setMobileMenuTab] = useState<'filter' | 'upload'>('filter');
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Sync URL to state when searchParams change (e.g. Back button)
@@ -37,6 +41,15 @@ function MediaKitContent() {
     if (s !== search) setSearch(s);
     if (JSON.stringify(f) !== JSON.stringify(activeFilters)) setActiveFilters(f);
   }, [searchParams]);
+
+  // Scroll to top button visibility logic
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Sync state to URL
   useEffect(() => {
@@ -571,21 +584,27 @@ function MediaKitContent() {
               </div>
             </div>
 
-            {/* Top Keywords section right under Hero search bar - Hidden on Mobile */}
-            <div className="hidden md:flex flex-wrap items-center justify-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
-              <span className="font-bold text-zinc-400 dark:text-zinc-500">Từ khóa hot:</span>
-              {hashtagsList.slice(0, 8).map((h) => (
-                <button
-                  key={h}
-                  onClick={() => toggleFilter(h, 'single')}
-                  className={cn(
-                    "px-2.5 py-0.5 rounded-full bg-zinc-200/50 dark:bg-zinc-800/40 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-semibold border border-transparent hover:border-blue-100/50 dark:hover:border-blue-900/50 shadow-sm",
-                    activeFilters.includes(h) && "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/50 font-black shadow-sm"
-                  )}
-                >
-                  {h}
-                </button>
-              ))}
+            {/* Top Keywords section right under Hero search bar - Scrollable on Mobile */}
+            <div className="flex md:flex-wrap items-center justify-start md:justify-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400 w-full overflow-x-auto snap-x no-scrollbar pb-2 md:pb-0 px-2 md:px-0">
+              <span className="font-bold text-zinc-400 dark:text-zinc-500 hidden md:inline-block shrink-0">Từ khóa hot:</span>
+              {hashtagsList.slice(0, 8).map((h) => {
+                const palette = getTagPalette(h);
+                const isActive = activeFilters.includes(h);
+                return (
+                  <button
+                    key={h}
+                    onClick={() => toggleFilter(h, 'single')}
+                    className={cn(
+                      "px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all shadow-sm shrink-0 snap-start",
+                      isActive
+                        ? `${palette.activeBg} ${palette.border} ${palette.text} ring-1 ring-current/20`
+                        : `${palette.bg} ${palette.border} ${palette.text} hover:brightness-95 dark:hover:brightness-110`
+                    )}
+                  >
+                    {h}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -995,6 +1014,140 @@ function MediaKitContent() {
       </AnimatePresence>
 
       <SocialSidebar />
+
+      {/* Mobile Action Bar (Bottom Navigation) */}
+      <div className="fixed bottom-4 left-4 right-4 z-40 lg:hidden pointer-events-none">
+        <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-full p-1.5 flex items-center justify-between gap-1 pointer-events-auto mx-auto max-w-sm">
+          <button
+            onClick={() => {
+              setSearch("");
+              setActiveFilters([]);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="flex-1 flex flex-col items-center justify-center py-2 text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 rounded-full transition-colors"
+          >
+            <Home size={20} className="mb-1" />
+            <span className="text-[9px] font-bold uppercase tracking-wider">Home</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              setMobileMenuTab('filter');
+              setIsMobileMenuOpen(true);
+            }}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center py-2 rounded-full transition-colors",
+              isMobileMenuOpen && mobileMenuTab === 'filter'
+                ? "text-blue-600 bg-blue-50 dark:bg-blue-900/30"
+                : "text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
+            )}
+          >
+            <div className="relative">
+              <Filter size={20} className="mb-1" />
+              {activeFilters.length > 0 && (
+                <span className="absolute -top-1 -right-2 w-3.5 h-3.5 bg-blue-600 rounded-full text-white text-[8px] font-black flex items-center justify-center border-2 border-white dark:border-zinc-900">
+                  {activeFilters.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[9px] font-bold uppercase tracking-wider">Lọc</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              setMobileMenuTab('upload');
+              setIsMobileMenuOpen(true);
+            }}
+            className="flex-1 flex flex-col items-center justify-center py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-colors shadow-lg shadow-blue-500/30"
+          >
+            <Plus size={20} className="mb-1" />
+            <span className="text-[9px] font-bold uppercase tracking-wider">Tải lên</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Drawer (Filter & Upload) */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end justify-center lg:hidden bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <motion.div
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white dark:bg-zinc-950 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] border border-zinc-200 dark:border-zinc-800 pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-zinc-100 dark:border-zinc-800/60 sticky top-0 bg-white/90 dark:bg-zinc-950/90 backdrop-blur z-10">
+                <h2 className="text-sm font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                  {mobileMenuTab === 'filter' ? (
+                    <><Filter size={16} className="text-blue-500" /> Bộ lọc Asset</>
+                  ) : (
+                    <><Cloud size={16} className="text-blue-500" /> Tải lên Asset</>
+                  )}
+                </h2>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full text-zinc-500 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-zinc-50/50 dark:bg-zinc-900/20">
+                {mobileMenuTab === 'filter' ? (
+                  <div className="-mx-4">
+                    <Sidebar
+                      assets={assets}
+                      activeFilters={activeFilters}
+                      onFilterChange={(f) => {
+                        toggleFilter(f, 'single');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      isMobileMode={true}
+                    />
+                  </div>
+                ) : (
+                  <UploadZone
+                    onUpload={handleUpload}
+                    loading={loading}
+                    existingProjects={projectsList}
+                    existingHashtags={hashtagsList}
+                    isMobileMode={true}
+                  />
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Back to Top Button (Desktop Only) */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.8 }}
+            className="fixed bottom-8 right-8 z-40 hidden lg:block"
+          >
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="p-3.5 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 border border-zinc-200 dark:border-zinc-700 rounded-full shadow-2xl hover:shadow-blue-500/20 hover:border-blue-300 dark:hover:border-blue-800 transition-all group"
+              title="Trở lên đầu trang"
+            >
+              <ArrowUp size={20} className="group-hover:-translate-y-0.5 transition-transform" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

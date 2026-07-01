@@ -20,11 +20,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn, copyToClipboard } from "@/lib/utils";
+import { getTagPalette } from "@/lib/tagPalette";
 
 interface SidebarProps {
   assets: any[];
   activeFilters: string[];
   onFilterChange: (filter: string) => void;
+  isMobileMode?: boolean;
 }
 
 const CATEGORIES = [
@@ -37,7 +39,7 @@ const CATEGORIES = [
   { id: "c:video", label: "Clip Ngắn (Beta)", icon: PlayCircle },
 ];
 
-export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps) {
+export function Sidebar({ assets, activeFilters, onFilterChange, isMobileMode }: SidebarProps) {
   // Extract unique projects from assets
   const projects = Array.from(
     new Set(
@@ -114,7 +116,12 @@ export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps)
   };
 
   return (
-    <div className="w-64 flex-shrink-0 space-y-8 sticky top-24 h-fit hidden lg:block">
+    <div className={cn(
+      "space-y-6 flex-shrink-0",
+      isMobileMode
+        ? "w-full pb-20" 
+        : "w-64 sticky top-24 h-[calc(100vh-8rem)] overflow-y-auto pr-2 pb-6 custom-scrollbar hidden lg:block"
+    )}>
       {/* Categories */}
       <section className="space-y-3">
         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-4">
@@ -157,6 +164,46 @@ export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps)
         </nav>
       </section>
 
+      {/* Hashtags */}
+      {popularTags.length > 0 && (
+        <section className="space-y-3">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-4 sticky top-0 bg-[#fafafa] dark:bg-[#050505] z-10 pb-2 flex items-center justify-between pr-4">
+            Top từ khóa
+            <span className="normal-case tracking-normal opacity-50">{totalHashtags}</span>
+          </h3>
+          <div className="flex flex-wrap gap-1.5 px-4 max-h-[35vh] overflow-y-auto custom-scrollbar pb-2">
+            {popularTags.map((tag) => {
+              const palette = getTagPalette(tag);
+              const isActive = activeFilters.includes(tag);
+              return (
+                <div key={tag} className="group/tag relative">
+                  <button
+                    onClick={() => onFilterChange(tag)}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border pr-6",
+                      isActive
+                        ? `${palette.activeBg} ${palette.border} ${palette.text} ring-1 ring-current/20 shadow-sm`
+                        : `${palette.bg} ${palette.border} ${palette.text} hover:brightness-95 dark:hover:brightness-110`
+                    )}
+                  >
+                    <Hash size={10} />
+                    {tag.replace("#", "")}
+                    <span className="ml-1 opacity-60 font-medium">{hashtagCounts[tag]}</span>
+                  </button>
+                  <button
+                    onClick={(e) => handleShare(e, tag)}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover/tag:opacity-100 text-zinc-400 hover:text-blue-600 transition-all p-0.5"
+                    title="Chia sẻ hashtag"
+                  >
+                    <Share2 size={10} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Projects */}
       {projects.length > 0 && (
         <section className="space-y-3">
@@ -188,42 +235,6 @@ export function Sidebar({ assets, activeFilters, onFilterChange }: SidebarProps)
                   title="Chia sẻ dự án này"
                 >
                   <Share2 size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Hashtags */}
-      {popularTags.length > 0 && (
-        <section className="space-y-3">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-4 sticky top-0 bg-[#fafafa] dark:bg-[#050505] z-10 pb-2 flex items-center justify-between pr-4">
-            Top từ khóa
-            <span className="normal-case tracking-normal opacity-50">{totalHashtags}</span>
-          </h3>
-          <div className="flex flex-wrap gap-1.5 px-4 max-h-[25vh] overflow-y-auto custom-scrollbar pb-2">
-            {popularTags.map((tag) => (
-              <div key={tag} className="group/tag relative">
-                <button
-                  onClick={() => onFilterChange(tag)}
-                  className={cn(
-                    "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-colors border pr-6",
-                    activeFilters.includes(tag)
-                      ? "bg-blue-100 border-blue-200 text-blue-700 dark:bg-blue-900/40 dark:border-blue-800/50 dark:text-blue-400"
-                      : "bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-900 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"
-                  )}
-                >
-                  <Hash size={10} />
-                  {tag.replace("#", "")}
-                  <span className="ml-1 opacity-50 font-medium">{hashtagCounts[tag]}</span>
-                </button>
-                <button
-                  onClick={(e) => handleShare(e, tag)}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover/tag:opacity-100 text-zinc-400 hover:text-blue-600 transition-all p-0.5"
-                  title="Chia sẻ hashtag"
-                >
-                  <Share2 size={10} />
                 </button>
               </div>
             ))}
