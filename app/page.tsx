@@ -454,7 +454,7 @@ function MediaKitContent() {
                 <Sparkles size={20} className="text-indigo-500 dark:text-indigo-400 animate-pulse shrink-0" />
               </h1>
               <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold max-w-sm mx-auto uppercase tracking-widest">
-                Kho lưu trữ tài nguyên hình ảnh chọn lọc.
+                Kho hình ảnh / clip chọn lọc.
               </p>
             </div>
 
@@ -1057,7 +1057,7 @@ function MediaKitContent() {
             <Home size={20} className="mb-1" />
             <span className="text-[9px] font-bold uppercase tracking-wider">Home</span>
           </button>
-          
+
           <button
             onClick={() => {
               setMobileMenuTab('filter');
@@ -1080,7 +1080,7 @@ function MediaKitContent() {
             </div>
             <span className="text-[9px] font-bold uppercase tracking-wider">Lọc</span>
           </button>
-          
+
           <button
             onClick={() => {
               setMobileMenuTab('upload');
@@ -1127,7 +1127,7 @@ function MediaKitContent() {
                   <X size={16} />
                 </button>
               </div>
-              
+
               <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-zinc-50/50 dark:bg-zinc-900/20">
                 {mobileMenuTab === 'filter' ? (
                   <div className="-mx-4">
