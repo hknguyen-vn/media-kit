@@ -32,14 +32,27 @@ function MediaKitContent() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
+  const isNavigatingRef = useRef(false);
+  const prevFiltersRef = useRef<string[]>(activeFilters);
+
   // Sync URL to state when searchParams change (e.g. Back button)
   useEffect(() => {
     const s = searchParams.get("s") || "";
     const f = searchParams.get("f") ? searchParams.get("f")!.split(",") : [];
 
-    // Only update if they actually changed to avoid unnecessary re-renders
-    if (s !== search) setSearch(s);
-    if (JSON.stringify(f) !== JSON.stringify(activeFilters)) setActiveFilters(f);
+    let changed = false;
+    if (s !== search) {
+      setSearch(s);
+      changed = true;
+    }
+    if (JSON.stringify(f) !== JSON.stringify(activeFilters)) {
+      setActiveFilters(f);
+      changed = true;
+    }
+
+    if (changed) {
+      isNavigatingRef.current = true;
+    }
   }, [searchParams]);
 
   // Scroll to top button visibility logic
@@ -59,7 +72,22 @@ function MediaKitContent() {
 
     const query = params.toString();
     const url = query ? `?${query}` : "/";
-    window.history.replaceState(null, "", url);
+
+    if (isNavigatingRef.current) {
+      // Navigation was triggered by browser Back/Forward (searchParams change)
+      window.history.replaceState(null, "", url);
+      isNavigatingRef.current = false;
+    } else {
+      // Navigation was triggered by user click interaction
+      const filtersChanged = JSON.stringify(prevFiltersRef.current) !== JSON.stringify(activeFilters);
+      if (filtersChanged) {
+        window.history.pushState(null, "", url);
+      } else {
+        window.history.replaceState(null, "", url);
+      }
+    }
+
+    prevFiltersRef.current = activeFilters;
 
     // Reset visible count on filter/search change
     setVisibleCount(12);
